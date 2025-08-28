@@ -1,0 +1,308 @@
+// Supabase Configuration
+const SUPABASE_URL = 'https://fnkjqwfuvsbwmjjfhxmw.supabase.co'; // Replace with your Supabase URL
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZua2pxd2Z1dnNid21qamZoeG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0MTc3NjMsImV4cCI6MjA3MTk5Mzc2M30.EI38rGygijyxeaZEM5u313mQJA61q5mRips85lVM5_c'; // Replace with your Supabase anon key
+
+// Initialize Supabase client
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// App state
+let allTweets = [];
+let filteredTweets = [];
+let currentPage = 0;
+const tweetsPerPage = 10;
+let currentFilter = 'all';
+
+// DOM elements
+const tweetsContainer = document.getElementById('tweetsContainer');
+const loadingState = document.getElementById('loadingState');
+const emptyState = document.getElementById('emptyState');
+const loadMoreBtn = document.getElementById('loadMoreBtn');
+const searchInput = document.getElementById('searchInput');
+const filterButtons = document.querySelectorAll('.filter-btn');
+const tweetTemplate = document.getElementById('tweetTemplate');
+
+// Stats elements
+const totalPostsEl = document.getElementById('totalPosts');
+const totalLikesEl = document.getElementById('totalLikes');
+const avgEngagementEl = document.getElementById('avgEngagement');
+
+// Initialize the app
+document.addEventListener('DOMContentLoaded', () => {
+    loadTweets();
+    setupEventListeners();
+});
+
+// Setup event listeners
+function setupEventListeners() {
+    // Search functionality
+    searchInput.addEventListener('input', debounce(handleSearch, 300));
+    
+    // Filter buttons
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.filter;
+            applyFilters();
+        });
+    });
+    
+    // Load more button
+    loadMoreBtn.addEventListener('click', loadMoreTweets);
+}
+
+// Load tweets from Supabase
+async function loadTweets() {
+    try {
+        showLoading(true);
+        
+        const { data: tweets, error } = await supabase
+            .from('jk_rowling_posts')
+            .select('*')
+            .order('published_at', { ascending: false })
+            .limit(100);
+        
+        if (error) {
+            console.error('Error loading tweets:', error);
+            showError('Failed to load tweets');
+            return;
+        }
+        
+        allTweets = tweets || [];
+        filteredTweets = [...allTweets];
+        
+        updateStats();
+        displayTweets();
+        showLoading(false);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showError('Failed to load tweets');
+        showLoading(false);
+    }
+}
+
+// Display tweets
+function displayTweets() {
+    const startIndex = currentPage * tweetsPerPage;
+    const endIndex = startIndex + tweetsPerPage;
+    const tweetsToShow = filteredTweets.slice(startIndex, endIndex);
+    
+    if (currentPage === 0) {
+        tweetsContainer.innerHTML = '';
+    }
+    
+    if (tweetsToShow.length === 0) {
+        if (currentPage === 0) {
+            showEmptyState();
+        }
+        loadMoreBtn.style.display = 'none';
+        return;
+    }
+    
+    tweetsToShow.forEach(tweet => {
+        const tweetElement = createTweetElement(tweet);
+        tweetsContainer.appendChild(tweetElement);
+    });
+    
+    // Show/hide load more button
+    loadMoreBtn.style.display = endIndex < filteredTweets.length ? 'inline-flex' : 'none';
+    
+    hideEmptyState();
+}
+
+// Create tweet element from template
+function createTweetElement(tweet) {
+    const template = tweetTemplate.content.cloneNode(true);
+    
+    // Set tweet content
+    template.querySelector('.tweet-text').textContent = tweet.content;
+    
+    // Set date
+    const date = new Date(tweet.published_at);
+    template.querySelector('.date-text').textContent = formatDate(date);
+    
+    // Set engagement metrics
+    template.querySelector('.likes-count').textContent = formatNumber(tweet.engagement_metrics?.likes || 0);
+    template.querySelector('.retweets-count').textContent = formatNumber(tweet.engagement_metrics?.retweets || 0);
+    template.querySelector('.replies-count').textContent = formatNumber(tweet.engagement_metrics?.replies || 0);
+    
+    // Set Twitter URL
+    const twitterLink = template.querySelector('.tweet-action');
+    if (tweet.url) {
+        twitterLink.href = tweet.url;
+    } else {
+        twitterLink.style.display = 'none';
+    }
+    
+    return template;
+}
+
+// Handle search
+function handleSearch() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    currentPage = 0;
+    
+    if (searchTerm === '') {
+        filteredTweets = [...allTweets];
+    } else {
+        filteredTweets = allTweets.filter(tweet => 
+            tweet.content.toLowerCase().includes(searchTerm)
+        );
+    }
+    
+    applyFilters();
+}
+
+// Apply filters
+function applyFilters() {
+    let filtered = [...filteredTweets];
+    
+    switch (currentFilter) {
+        case 'recent':
+            // Already sorted by published_at desc
+            break;
+        case 'popular':
+            filtered.sort((a, b) => {
+                const aEngagement = (a.engagement_metrics?.likes || 0) + 
+                                  (a.engagement_metrics?.retweets || 0) + 
+                                  (a.engagement_metrics?.replies || 0);
+                const bEngagement = (b.engagement_metrics?.likes || 0) + 
+                                  (b.engagement_metrics?.retweets || 0) + 
+                                  (b.engagement_metrics?.replies || 0);
+                return bEngagement - aEngagement;
+            });
+            break;
+        default:
+            // 'all' - no additional filtering
+            break;
+    }
+    
+    filteredTweets = filtered;
+    currentPage = 0;
+    displayTweets();
+}
+
+// Load more tweets
+function loadMoreTweets() {
+    currentPage++;
+    displayTweets();
+}
+
+// Update statistics
+function updateStats() {
+    totalPostsEl.textContent = allTweets.length;
+    
+    const totalLikes = allTweets.reduce((sum, tweet) => 
+        sum + (tweet.engagement_metrics?.likes || 0), 0
+    );
+    totalLikesEl.textContent = formatNumber(totalLikes);
+    
+    const totalEngagement = allTweets.reduce((sum, tweet) => 
+        sum + (tweet.engagement_metrics?.likes || 0) + 
+        (tweet.engagement_metrics?.retweets || 0) + 
+        (tweet.engagement_metrics?.replies || 0), 0
+    );
+    const avgEngagement = allTweets.length > 0 ? Math.round(totalEngagement / allTweets.length) : 0;
+    avgEngagementEl.textContent = formatNumber(avgEngagement);
+}
+
+// Utility functions
+function formatDate(date) {
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) {
+        return 'Just now';
+    } else if (diffInHours < 24) {
+        return `${diffInHours}h ago`;
+    } else if (diffInHours < 48) {
+        return 'Yesterday';
+    } else {
+        return date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+        });
+    }
+}
+
+function formatNumber(num) {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// UI state functions
+function showLoading(show) {
+    loadingState.style.display = show ? 'block' : 'none';
+    if (show) {
+        tweetsContainer.style.display = 'none';
+        loadMoreBtn.style.display = 'none';
+        hideEmptyState();
+    } else {
+        tweetsContainer.style.display = 'grid';
+    }
+}
+
+function showEmptyState() {
+    emptyState.style.display = 'block';
+    tweetsContainer.style.display = 'none';
+    loadMoreBtn.style.display = 'none';
+}
+
+function hideEmptyState() {
+    emptyState.style.display = 'none';
+    tweetsContainer.style.display = 'grid';
+}
+
+function showError(message) {
+    // You can implement a toast notification here
+    console.error(message);
+}
+
+// Configuration instructions
+console.log(`
+🚀 JK Rowling Tweet Viewer Setup Instructions:
+
+1. Replace the Supabase configuration at the top of this file:
+   - SUPABASE_URL: Your Supabase project URL
+   - SUPABASE_ANON_KEY: Your Supabase anon key
+
+2. Make sure your Supabase table 'jk_rowling_posts' has the correct structure:
+   - content: TEXT
+   - published_at: TIMESTAMP
+   - url: TEXT
+   - engagement_metrics: JSONB
+
+3. The app will automatically load and display tweets with:
+   - Real-time search
+   - Filtering (All, Recent, Popular)
+   - Engagement metrics
+   - Direct links to Twitter
+   - Responsive design
+
+4. Features included:
+   - ✅ Search functionality
+   - ✅ Filter by popularity/recent
+   - ✅ Load more pagination
+   - ✅ Engagement statistics
+   - ✅ Mobile responsive
+   - ✅ Loading states
+   - ✅ Error handling
+`);

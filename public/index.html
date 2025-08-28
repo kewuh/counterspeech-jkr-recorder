@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JK Rowling - Recent Tweets</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="profile-section">
+                    <img src="https://pbs.twimg.com/profile_images/1567278791579369472/dnq4ZU5j_normal.jpg" alt="JK Rowling" class="profile-image">
+                    <div class="profile-info">
+                        <h1 class="profile-name">J.K. Rowling</h1>
+                        <p class="profile-handle">@jk_rowling</p>
+                        <p class="profile-bio">Writer sometimes known as Robert Galbraith</p>
+                    </div>
+                </div>
+                <div class="stats-section">
+                    <div class="stat">
+                        <span class="stat-number" id="totalPosts">-</span>
+                        <span class="stat-label">Posts</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="totalLikes">-</span>
+                        <span class="stat-label">Total Likes</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="avgEngagement">-</span>
+                        <span class="stat-label">Avg Engagement</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchInput" placeholder="Search tweets..." class="search-input">
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="recent">Recent</button>
+                <button class="filter-btn" data-filter="popular">Popular</button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Loading tweets...</p>
+        </div>
+
+        <!-- Tweets Container -->
+        <div id="tweetsContainer" class="tweets-container">
+            <!-- Tweets will be dynamically inserted here -->
+        </div>
+
+        <!-- Load More Button -->
+        <div class="load-more-container">
+            <button id="loadMoreBtn" class="load-more-btn" style="display: none;">
+                <i class="fas fa-plus"></i>
+                Load More Tweets
+            </button>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-search"></i>
+            <h3>No tweets found</h3>
+            <p>Try adjusting your search or filters</p>
+        </div>
+    </div>
+
+    <!-- Tweet Template -->
+    <template id="tweetTemplate">
+        <article class="tweet-card">
+            <div class="tweet-header">
+                <div class="tweet-author">
+                    <img src="https://pbs.twimg.com/profile_images/1567278791579369472/dnq4ZU5j_normal.jpg" alt="JK Rowling" class="tweet-avatar">
+                    <div class="tweet-author-info">
+                        <span class="tweet-author-name">J.K. Rowling</span>
+                        <span class="tweet-author-handle">@jk_rowling</span>
+                    </div>
+                </div>
+                <div class="tweet-date">
+                    <i class="far fa-clock"></i>
+                    <span class="date-text"></span>
+                </div>
+            </div>
+            
+            <div class="tweet-content">
+                <p class="tweet-text"></p>
+            </div>
+            
+            <div class="tweet-actions">
+                <a href="#" class="tweet-action" target="_blank">
+                    <i class="fas fa-external-link-alt"></i>
+                    <span>View on Twitter</span>
+                </a>
+            </div>
+            
+            <div class="tweet-engagement">
+                <div class="engagement-item">
+                    <i class="fas fa-heart"></i>
+                    <span class="likes-count"></span>
+                </div>
+                <div class="engagement-item">
+                    <i class="fas fa-retweet"></i>
+                    <span class="retweets-count"></span>
+                </div>
+                <div class="engagement-item">
+                    <i class="fas fa-comment"></i>
+                    <span class="replies-count"></span>
+                </div>
+            </div>
+        </article>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>
