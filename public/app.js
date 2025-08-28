@@ -30,6 +30,7 @@ const avgEngagementEl = document.getElementById('avgEngagement');
 document.addEventListener('DOMContentLoaded', () => {
     loadTweets();
     setupEventListeners();
+    createModal();
 });
 
 // Setup event listeners
@@ -109,6 +110,11 @@ function displayTweets() {
     loadMoreBtn.style.display = endIndex < filteredTweets.length ? 'inline-flex' : 'none';
     
     hideEmptyState();
+    
+    // Load Twitter widgets after adding tweets
+    if (window.twttr && window.twttr.widgets) {
+        window.twttr.widgets.load();
+    }
 }
 
 // Create tweet element from template
@@ -135,7 +141,179 @@ function createTweetElement(tweet) {
         twitterLink.style.display = 'none';
     }
     
+    // Handle media content
+    const mediaContainer = template.querySelector('.tweet-media');
+    const mediaGallery = template.querySelector('.media-gallery');
+    
+    if (tweet.raw_data?.attributes?.post_data?.extended_entities?.media) {
+        const media = tweet.raw_data.attributes.post_data.extended_entities.media;
+        displayMedia(mediaGallery, media);
+        mediaContainer.style.display = 'block';
+    }
+    
+    // Handle reply context
+    const replyContext = template.querySelector('.reply-context');
+    const replyToUser = template.querySelector('.reply-to-user');
+    
+    if (tweet.raw_data?.attributes?.post_data?.in_reply_to_screen_name) {
+        const replyToScreenName = tweet.raw_data.attributes.post_data.in_reply_to_screen_name;
+        const replyToStatusId = tweet.raw_data.attributes.post_data.in_reply_to_status_id_str;
+        
+        replyToUser.textContent = `@${replyToScreenName}`;
+        replyToUser.href = `https://twitter.com/${replyToScreenName}/status/${replyToStatusId}`;
+        replyContext.style.display = 'block';
+        
+        // Show embed button for replies
+        const embedBtn = template.querySelector('.embed-btn');
+        embedBtn.style.display = 'inline-flex';
+        embedBtn.addEventListener('click', () => embedTweet(replyToStatusId, template.querySelector('.embedded-tweet')));
+    }
+    
+    // Handle embedded tweets for replies
+    const embeddedTweet = template.querySelector('.embedded-tweet');
+    if (tweet.raw_data?.attributes?.post_data?.in_reply_to_status_id_str) {
+        const replyToStatusId = tweet.raw_data.attributes.post_data.in_reply_to_status_id_str;
+        embedTweet(replyToStatusId, embeddedTweet);
+    }
+    
     return template;
+}
+
+// Display media content
+function displayMedia(mediaGallery, mediaArray) {
+    const mediaCount = mediaArray.length;
+    
+    // Set grid class based on media count
+    if (mediaCount === 1) {
+        mediaGallery.classList.add('single');
+    } else if (mediaCount === 2) {
+        mediaGallery.classList.add('double');
+    } else if (mediaCount === 3) {
+        mediaGallery.classList.add('triple');
+    } else {
+        mediaGallery.classList.add('quad');
+    }
+    
+    mediaArray.forEach((media, index) => {
+        const mediaItem = document.createElement('div');
+        mediaItem.className = 'media-item';
+        
+        if (media.type === 'photo') {
+            const img = document.createElement('img');
+            img.src = media.media_url_https;
+            img.alt = 'Tweet media';
+            img.loading = 'lazy';
+            mediaItem.appendChild(img);
+            
+            // Add click handler for modal
+            mediaItem.addEventListener('click', () => openMediaModal(media.media_url_https, 'image'));
+        } else if (media.type === 'video') {
+            const video = document.createElement('video');
+            video.src = media.video_info?.variants?.[0]?.url || media.media_url_https;
+            video.controls = true;
+            video.muted = true;
+            video.preload = 'metadata';
+            mediaItem.appendChild(video);
+            
+            // Add play overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'media-overlay';
+            overlay.innerHTML = '<i class="fas fa-play"></i>';
+            mediaItem.appendChild(overlay);
+            
+            // Add click handler for modal
+            mediaItem.addEventListener('click', () => openMediaModal(video.src, 'video'));
+        }
+        
+        mediaGallery.appendChild(mediaItem);
+    });
+}
+
+// Embed tweet using Twitter Widgets API
+function embedTweet(tweetId, container) {
+    if (!window.twttr) {
+        console.warn('Twitter Widgets not loaded');
+        return;
+    }
+    
+    const embedContainer = container.querySelector('.embedded-tweet-container');
+    embedContainer.innerHTML = '';
+    
+    window.twttr.widgets.createTweet(tweetId, embedContainer, {
+        conversation: 'none',
+        cards: 'hidden',
+        theme: 'light'
+    }).then(el => {
+        if (el) {
+            container.style.display = 'block';
+        }
+    });
+}
+
+// Create modal for media viewing
+function createModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'mediaModal';
+    
+    modal.innerHTML = `
+        <span class="close-modal">&times;</span>
+        <div class="modal-content" id="modalContent"></div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close modal on click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal || e.target.className === 'close-modal') {
+            closeMediaModal();
+        }
+    });
+    
+    // Close modal on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeMediaModal();
+        }
+    });
+}
+
+// Open media modal
+function openMediaModal(src, type) {
+    const modal = document.getElementById('mediaModal');
+    const modalContent = document.getElementById('modalContent');
+    
+    modalContent.innerHTML = '';
+    
+    if (type === 'image') {
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = 'Full size image';
+        modalContent.appendChild(img);
+    } else if (type === 'video') {
+        const video = document.createElement('video');
+        video.src = src;
+        video.controls = true;
+        video.autoplay = true;
+        video.muted = false;
+        modalContent.appendChild(video);
+    }
+    
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+// Close media modal
+function closeMediaModal() {
+    const modal = document.getElementById('mediaModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    
+    // Stop any playing videos
+    const video = modal.querySelector('video');
+    if (video) {
+        video.pause();
+    }
 }
 
 // Handle search
@@ -172,6 +350,11 @@ function applyFilters() {
                                   (b.engagement_metrics?.replies || 0);
                 return bEngagement - aEngagement;
             });
+            break;
+        case 'replies':
+            filtered = filtered.filter(tweet => 
+                tweet.raw_data?.attributes?.post_data?.in_reply_to_screen_name
+            );
             break;
         default:
             // 'all' - no additional filtering
@@ -278,31 +461,25 @@ function showError(message) {
 
 // Configuration instructions
 console.log(`
-🚀 JK Rowling Tweet Viewer Setup Instructions:
+🚀 Enhanced JK Rowling Tweet Viewer Setup Instructions:
 
-1. Replace the Supabase configuration at the top of this file:
-   - SUPABASE_URL: Your Supabase project URL
-   - SUPABASE_ANON_KEY: Your Supabase anon key
+1. ✅ Supabase credentials configured
+2. ✅ Twitter Widgets API loaded for embedded tweets
+3. ✅ Media gallery support for images and videos
+4. ✅ Reply context and embedded original tweets
+5. ✅ Modal viewer for full-size media
+6. ✅ Enhanced filtering (All, Recent, Popular, Replies)
 
-2. Make sure your Supabase table 'jk_rowling_posts' has the correct structure:
-   - content: TEXT
-   - published_at: TIMESTAMP
-   - url: TEXT
-   - engagement_metrics: JSONB
-
-3. The app will automatically load and display tweets with:
-   - Real-time search
-   - Filtering (All, Recent, Popular)
-   - Engagement metrics
-   - Direct links to Twitter
-   - Responsive design
-
-4. Features included:
-   - ✅ Search functionality
-   - ✅ Filter by popularity/recent
-   - ✅ Load more pagination
-   - ✅ Engagement statistics
-   - ✅ Mobile responsive
-   - ✅ Loading states
-   - ✅ Error handling
+Features included:
+- ✅ Real-time search
+- ✅ Filter by popularity/recent/replies
+- ✅ Engagement metrics
+- ✅ Direct links to Twitter
+- ✅ Embedded tweets for replies
+- ✅ Media gallery with modal viewer
+- ✅ Reply context display
+- ✅ Mobile responsive
+- ✅ Loading states
+- ✅ Error handling
+- ✅ Twitter Widgets integration
 `);

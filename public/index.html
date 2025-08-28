@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Twitter Widgets -->
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </head>
 <body>
     <div class="container">
@@ -48,6 +50,7 @@
                 <button class="filter-btn active" data-filter="all">All</button>
                 <button class="filter-btn" data-filter="recent">Recent</button>
                 <button class="filter-btn" data-filter="popular">Popular</button>
+                <button class="filter-btn" data-filter="replies">Replies</button>
             </div>
         </div>
 
@@ -97,6 +100,25 @@
             
             <div class="tweet-content">
                 <p class="tweet-text"></p>
+                
+                <!-- Media Gallery -->
+                <div class="tweet-media" style="display: none;">
+                    <div class="media-gallery"></div>
+                </div>
+                
+                <!-- Embedded Tweet (for replies) -->
+                <div class="embedded-tweet" style="display: none;">
+                    <div class="embedded-tweet-container"></div>
+                </div>
+                
+                <!-- Reply Context -->
+                <div class="reply-context" style="display: none;">
+                    <div class="reply-to">
+                        <i class="fas fa-reply"></i>
+                        <span>Replying to </span>
+                        <a href="#" class="reply-to-user" target="_blank"></a>
+                    </div>
+                </div>
             </div>
             
             <div class="tweet-actions">
@@ -104,6 +126,10 @@
                     <i class="fas fa-external-link-alt"></i>
                     <span>View on Twitter</span>
                 </a>
+                <button class="tweet-action embed-btn" style="display: none;">
+                    <i class="fas fa-code"></i>
+                    <span>Embed Tweet</span>
+                </button>
             </div>
             
             <div class="tweet-engagement">
