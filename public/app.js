@@ -9,7 +9,7 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let allTweets = [];
 let filteredTweets = [];
 let currentPage = 0;
-const tweetsPerPage = 10;
+const tweetsPerPage = 100; // Show 100 tweets per page
 let currentFilter = 'all';
 
 // DOM elements
@@ -61,7 +61,7 @@ async function loadTweets() {
             .from('jk_rowling_posts')
             .select('*')
             .order('published_at', { ascending: false })
-            .limit(100);
+            .limit(1000); // Load up to 1000 tweets for better pagination
         
         if (error) {
             console.error('Error loading tweets:', error);
@@ -85,18 +85,14 @@ async function loadTweets() {
 
 // Display tweets
 function displayTweets() {
-    const startIndex = currentPage * tweetsPerPage;
-    const endIndex = startIndex + tweetsPerPage;
-    const tweetsToShow = filteredTweets.slice(startIndex, endIndex);
+    // Show all filtered tweets at once (up to 100)
+    const tweetsToShow = filteredTweets.slice(0, 100);
     
-    if (currentPage === 0) {
-        tweetsContainer.innerHTML = '';
-    }
+    // Clear container
+    tweetsContainer.innerHTML = '';
     
     if (tweetsToShow.length === 0) {
-        if (currentPage === 0) {
-            showEmptyState();
-        }
+        showEmptyState();
         loadMoreBtn.style.display = 'none';
         return;
     }
@@ -106,8 +102,8 @@ function displayTweets() {
         tweetsContainer.appendChild(tweetElement);
     });
     
-    // Show/hide load more button
-    loadMoreBtn.style.display = endIndex < filteredTweets.length ? 'inline-flex' : 'none';
+    // Hide load more button since we're showing all tweets
+    loadMoreBtn.style.display = 'none';
     
     hideEmptyState();
     
@@ -366,9 +362,8 @@ function applyFilters() {
     displayTweets();
 }
 
-// Load more tweets
+// Load more tweets (now just refreshes the display)
 function loadMoreTweets() {
-    currentPage++;
     displayTweets();
 }
 
