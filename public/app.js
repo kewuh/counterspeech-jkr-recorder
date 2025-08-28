@@ -85,8 +85,8 @@ async function loadTweets() {
 
 // Display tweets
 function displayTweets() {
-    // Show all filtered tweets at once (up to 100)
-    const tweetsToShow = filteredTweets.slice(0, 100);
+    // Show all filtered tweets at once
+    const tweetsToShow = filteredTweets;
     
     // Clear container
     tweetsContainer.innerHTML = '';

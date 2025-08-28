@@ -76,6 +76,7 @@ class JunkipediaAPI {
       const {
         limit = 100,
         offset = 0,
+        page,
         startDate,
         endDate,
         postType,
@@ -86,8 +87,14 @@ class JunkipediaAPI {
 
       const params = {
         limit,
-        offset,
       };
+
+      // Add pagination parameter (prefer page over offset)
+      if (page) {
+        params.page = page;
+      } else if (offset) {
+        params.offset = offset;
+      }
 
       // Only add optional parameters if they're explicitly provided
       if (postType) {
