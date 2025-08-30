@@ -796,14 +796,9 @@ function loadMoreTweets() {
 function updateStats() {
     totalPostsEl.textContent = allTweets.length;
     
-    // Get the most recent tweet date as last sync time
-    if (allTweets.length > 0) {
-        const mostRecentTweet = allTweets[0]; // Already sorted by published_at desc
-        const lastSyncDate = new Date(mostRecentTweet.published_at);
-        lastSyncEl.textContent = formatDateTime(lastSyncDate);
-    } else {
-        lastSyncEl.textContent = 'No data';
-    }
+    // Show current time as last sync time
+    const currentTime = new Date();
+    lastSyncEl.textContent = formatDateTime(currentTime);
     
     // Calculate AI analysis statistics
     const analyzedCount = allTweets.filter(t => t.tweet_analysis).length;
