@@ -31,7 +31,7 @@ class StripeAPI {
                 };
             }
             
-            const { email, monthlyLimit, perPostAmount, paymentMethodId } = pledgeData;
+            const { email, name, monthlyLimit, perPostAmount, paymentMethodId, publicPledge } = pledgeData;
             
             // Create a customer
             const customer = await this.stripe.customers.create({
@@ -42,20 +42,17 @@ class StripeAPI {
                 },
             });
 
-            // Create a PaymentIntent for the monthly limit (pre-authorization)
-            const paymentIntent = await this.stripe.paymentIntents.create({
-                amount: monthlyLimit * 100, // Convert to pence
-                currency: 'gbp',
+            // Create SetupIntent for future charges (pre-authorization)
+            const setupIntent = await this.stripe.setupIntents.create({
                 customer: customer.id,
                 payment_method: paymentMethodId,
                 confirm: true,
-                capture_method: 'manual', // Don't capture immediately
                 automatic_payment_methods: {
                     enabled: true,
                     allow_redirects: 'never'
                 },
                 metadata: {
-                    pledge_type: 'monthly_limit',
+                    pledge_type: 'monthly_pledge',
                     per_post_amount: perPostAmount,
                 },
             });
@@ -68,13 +65,16 @@ class StripeAPI {
                         .from('pledges')
                         .insert({
                             customer_id: customer.id,
-                            payment_intent_id: paymentIntent.id,
+                            setup_intent_id: setupIntent.id,
                             payment_method_id: paymentMethodId,
                             email: email,
+                            name: name,
                             monthly_limit: monthlyLimit,
                             per_post_amount: perPostAmount,
                             organization: 'split', // Default to split between all organisations
                             current_month_charged: 0,
+                            transphobic_posts_count: 0, // Track count of transphobic posts
+                            public_pledge: publicPledge || false,
                             status: 'active',
                             created_at: new Date().toISOString(),
                         })
@@ -100,12 +100,12 @@ class StripeAPI {
                 console.log('Supabase not available, skipping database insert');
             }
 
-            return {
-                success: true,
-                pledgeId: pledgeId,
-                customerId: customer.id,
-                paymentIntentId: paymentIntent.id,
-            };
+                            return {
+                    success: true,
+                    pledgeId: pledgeId,
+                    customerId: customer.id,
+                    setupIntentId: setupIntent.id,
+                };
 
         } catch (error) {
             console.error('Error creating pledge:', error);
@@ -203,6 +203,161 @@ class StripeAPI {
                 success: false,
                 error: error.message,
             };
+        }
+    }
+
+    // Track transphobic post without charging immediately
+    async trackTransphobicPost(pledgeId, tweetId) {
+        try {
+            if (!this.supabase) {
+                return { success: false, error: 'Supabase not initialized' };
+            }
+            
+            // Get pledge details
+            const { data: pledges, error: pledgeError } = await this.supabase
+                .from('pledges')
+                .select('*')
+                .eq('id', pledgeId)
+                .eq('status', 'active');
+                
+            if (pledgeError || !pledges || pledges.length === 0) {
+                return { success: false, error: 'Pledge not found' };
+            }
+            
+            const pledge = pledges[0];
+            
+            // Increment transphobic posts count
+            const newCount = pledge.transphobic_posts_count + 1;
+            const potentialCharge = newCount * pledge.per_post_amount;
+            
+            // Check if this would exceed monthly limit
+            if (potentialCharge > pledge.monthly_limit) {
+                return { success: false, error: 'Monthly limit would be exceeded' };
+            }
+            
+            // Update pledge with new count
+            await this.supabase
+                .from('pledges')
+                .update({
+                    transphobic_posts_count: newCount,
+                    last_transphobic_post_date: new Date().toISOString(),
+                })
+                .eq('id', pledgeId);
+
+            // Store transphobic post record
+            await this.supabase
+                .from('transphobic_posts')
+                .insert({
+                    pledge_id: pledgeId,
+                    tweet_id: tweetId,
+                    post_number: newCount,
+                    created_at: new Date().toISOString(),
+                });
+
+            return {
+                success: true,
+                postCount: newCount,
+                potentialCharge: potentialCharge,
+            };
+            
+        } catch (error) {
+            console.error('Error tracking transphobic post:', error);
+            return { success: false, error: error.message };
+        }
+    }
+    
+    // Process monthly charges for all pledges
+    async processMonthlyCharges() {
+        try {
+            if (!this.stripe || !this.supabase) {
+                return { success: false, error: 'Stripe or Supabase not initialized' };
+            }
+            
+            // Get all active pledges that have transphobic posts
+            const { data: pledges, error: pledgeError } = await this.supabase
+                .from('pledges')
+                .select('*')
+                .eq('status', 'active')
+                .gt('transphobic_posts_count', 0);
+                
+            if (pledgeError) {
+                return { success: false, error: 'Error fetching pledges' };
+            }
+            
+            const results = [];
+            
+            for (const pledge of pledges) {
+                try {
+                    const totalCharge = pledge.transphobic_posts_count * pledge.per_post_amount;
+                    
+                    // Create PaymentIntent for the total monthly charge
+                    const paymentIntent = await this.stripe.paymentIntents.create({
+                        amount: totalCharge * 100, // Convert to pence
+                        currency: 'gbp',
+                        customer: pledge.customer_id,
+                        payment_method: pledge.payment_method_id,
+                        confirm: true,
+                        automatic_payment_methods: {
+                            enabled: true,
+                            allow_redirects: 'never'
+                        },
+                        description: `Monthly transphobic content charge - ${pledge.transphobic_posts_count} posts`,
+                        metadata: {
+                            pledge_id: pledge.id,
+                            post_count: pledge.transphobic_posts_count,
+                            charge_type: 'monthly_transphobic_content',
+                        },
+                    });
+                    
+                    // Update pledge with charge
+                    await this.supabase
+                        .from('pledges')
+                        .update({
+                            current_month_charged: totalCharge,
+                            transphobic_posts_count: 0, // Reset count
+                            last_charge_date: new Date().toISOString(),
+                        })
+                        .eq('id', pledge.id);
+
+                    // Store charge record
+                    await this.supabase
+                        .from('pledge_charges')
+                        .insert({
+                            pledge_id: pledge.id,
+                            charge_id: paymentIntent.id,
+                            amount: totalCharge,
+                            tweet_count: pledge.transphobic_posts_count,
+                            status: 'completed',
+                            created_at: new Date().toISOString(),
+                        });
+
+                    results.push({
+                        pledgeId: pledge.id,
+                        email: pledge.email,
+                        success: true,
+                        chargeId: paymentIntent.id,
+                        amount: totalCharge,
+                        postCount: pledge.transphobic_posts_count,
+                    });
+                    
+                } catch (error) {
+                    results.push({
+                        pledgeId: pledge.id,
+                        email: pledge.email,
+                        success: false,
+                        error: error.message,
+                    });
+                }
+            }
+            
+            return {
+                success: true,
+                results: results,
+            };
+            
+        } catch (error) {
+            console.error('Error processing monthly charges:', error);
+            return { success: false, error: error.message };
         }
     }
 
@@ -314,6 +469,52 @@ class StripeAPI {
             return {
                 success: false,
                 error: error.message,
+            };
+        }
+    }
+
+    // Get recent public pledgers
+    async getRecentPublicPledgers(limit = 3) {
+        if (!this.supabase) {
+            return {
+                success: false,
+                error: 'Supabase not configured',
+                pledgers: []
+            };
+        }
+
+        try {
+            const { data: pledgers, error } = await this.supabase
+                .from('pledges')
+                .select('name, monthly_limit, per_post_amount, created_at')
+                .eq('public_pledge', true)
+                .eq('status', 'active')
+                .order('created_at', { ascending: false })
+                .limit(limit);
+
+            if (error) {
+                console.error('Error fetching public pledgers:', error);
+                throw error;
+            }
+
+            // Format the data for display
+            const formattedPledgers = pledgers.map(pledger => ({
+                name: pledger.name || 'Anonymous',
+                monthlyLimit: pledger.monthly_limit,
+                perPostAmount: pledger.per_post_amount,
+                createdAt: pledger.created_at
+            }));
+
+            return {
+                success: true,
+                pledgers: formattedPledgers
+            };
+        } catch (error) {
+            console.error('Error getting recent public pledgers:', error);
+            return {
+                success: false,
+                error: error.message,
+                pledgers: []
             };
         }
     }

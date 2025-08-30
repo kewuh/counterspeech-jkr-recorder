@@ -5,68 +5,152 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transphobia Pledge - Turn Hate Into Hope</title>
     <link rel="stylesheet" href="pledge-styles.css">
-    <script src="https://js.stripe.com/v3/"></script>
     <script src="/stripe-config.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        // Check if Stripe loaded properly
+        window.addEventListener('load', function() {
+            if (typeof Stripe === 'undefined') {
+                console.error('❌ Stripe library failed to load');
+                document.getElementById('card-element').innerHTML = '<div style="color: red; padding: 10px; border: 1px solid red; border-radius: 4px;">Payment form failed to load. Please refresh the page.</div>';
+            }
+        });
+    </script>
 </head>
 <body>
     <!-- Hero Section -->
     <section class="hero">
-        <div class="hero-content">
-            <h1 class="hero-title">
-                Turn <span class="highlight">Hate</span> Into <span class="highlight">Hope</span>
-            </h1>
-            <p class="hero-subtitle">
-                Pledge to donate when JK Rowling posts transphobic content. 
-                Your money goes directly to UK trans rights organisations.
-            </p>
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    Turn <span class="highlight">Hate</span> Into <span class="highlight">Hope</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Pledge to donate when JK Rowling posts transphobic content. 
+                    Your money goes directly to UK trans rights organisations.
+                </p>
+            </div>
         </div>
     </section>
 
-    <!-- Main Pledge Form -->
-    <section class="pledge-form-section">
+    <!-- Tweet Example and Pledge Form Section -->
+    <section class="example-pledge-section">
         <div class="container">
-            <div class="form-container">
-                <h2>Make Your Pledge</h2>
-                <p class="form-intro">Set up your automatic donation. You'll only be charged when transphobic content is detected.</p>
+            <div class="example-pledge-grid">
+                <!-- Tweet Example -->
+                <div class="tweet-example-container">
+                    <div class="tweet-example">
+                        <div class="tweet-header">
+                            <img src="https://pbs.twimg.com/profile_images/1946336674348138497/YKbRo0uw_400x400.jpg" alt="JK Rowling" class="tweet-avatar">
+                            <div class="tweet-info">
+                                <div class="tweet-author">J.K. Rowling</div>
+                                <div class="tweet-handle">@jk_rowling</div>
+                                <div class="tweet-date">Dec 28, 2024</div>
+                            </div>
+                        </div>
+                        <div class="tweet-content">
+                            "There are no trans kids. No child is 'born in the wrong body'. There are only adults like you, prepared to sacrifice the health of minors to bolster your belief in an ideology that will end up wreaking more harm than lobotomies and false memory syndrome combined."
+                        </div>
+                        <div class="tweet-stats">
+                            <span class="tweet-views">11.8M Views</span>
+                        </div>
+                        <div class="tweet-analysis">
+                            <div class="analysis-badge analysis-transphobic">🚨 Transphobic Content Detected</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Pledgers (under the tweet) -->
+                    <div class="recent-pledgers-under-tweet">
+                        <h3>Recent Pledgers</h3>
+                        <div class="pledger-list" id="recentPledgersList">
+                            <div class="pledger-item">
+                                <div class="pledger-avatar">S</div>
+                                <div class="pledger-info">
+                                    <div class="pledger-name">Sarah M.</div>
+                                    <div class="pledger-amount">£25 cap • 25p per post</div>
+                                </div>
+                                <div class="pledger-time">2 min ago</div>
+                            </div>
+                            <div class="pledger-item">
+                                <div class="pledger-avatar">J</div>
+                                <div class="pledger-info">
+                                    <div class="pledger-name">James L.</div>
+                                    <div class="pledger-amount">£50 cap • 50p per post</div>
+                                </div>
+                                <div class="pledger-time">5 min ago</div>
+                            </div>
+                            <div class="pledger-item">
+                                <div class="pledger-avatar">M</div>
+                                <div class="pledger-info">
+                                    <div class="pledger-name">Maria K.</div>
+                                    <div class="pledger-amount">£25 cap • 25p per post</div>
+                                </div>
+                                <div class="pledger-time">8 min ago</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pledge Form -->
+                <div class="form-container">
+                    <h2>Make her words pay.</h2>
+                    <p class="form-intro">When she tweets hate, trans rights groups get funded. Preauthorise us to charge your card up to your monthly cap.</p>
                 
                 <form id="pledgeForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="email">Email Address</label>
-                            <input type="email" id="email" required>
-                        </div>
+                    <div class="form-group">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" required>
                     </div>
                     
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="monthlyLimit">Monthly Donation Limit</label>
-                            <select id="monthlyLimit" required>
-                                <option value="">Select amount</option>
-                                <option value="10">£10</option>
-                                <option value="25">£25</option>
-                                <option value="50">£50</option>
-                                <option value="100">£100</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="perPostAmount">Amount per Transphobic Post</label>
-                            <select id="perPostAmount" required>
-                                <option value="">Select amount</option>
-                                <option value="0.10">10p</option>
-                                <option value="0.25">25p</option>
-                                <option value="0.50">50p</option>
-                                <option value="1.00">£1</option>
-                            </select>
-                        </div>
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" required>
                     </div>
                     
-                    <div class="card-element-container">
+                    <div class="form-group">
+                        <label for="monthlyLimit">Monthly Cap</label>
+                        <div class="selected-amount-display">
+                            <span class="selected-amount">£25</span>
+                            <button type="button" class="change-btn" id="changeMonthlyBtn">Change</button>
+                        </div>
+                        <div class="button-group hidden" id="monthlyLimitButtons">
+                            <button type="button" class="amount-btn" data-value="10">£10</button>
+                            <button type="button" class="amount-btn selected" data-value="25">£25</button>
+                            <button type="button" class="amount-btn" data-value="50">£50</button>
+                            <button type="button" class="amount-btn" data-value="100">£100</button>
+                        </div>
+                        <input type="hidden" id="monthlyLimit" value="25" required>
+                    </div>
+                    
+                                            <div class="form-group">
+                            <label for="perPostAmount">Amount you pledge to donate per transphobic tweet</label>
+                        <div class="selected-amount-display">
+                            <span class="selected-amount">25p</span>
+                            <button type="button" class="change-btn" id="changePerPostBtn">Change</button>
+                        </div>
+                        <div class="button-group hidden" id="perPostAmountButtons">
+                            <button type="button" class="amount-btn" data-value="0.10">10p</button>
+                            <button type="button" class="amount-btn selected" data-value="0.25">25p</button>
+                            <button type="button" class="amount-btn" data-value="0.50">50p</button>
+                            <button type="button" class="amount-btn" data-value="1.00">£1</button>
+                        </div>
+                        <input type="hidden" id="perPostAmount" value="0.25" required>
+                    </div>
+                    
+                    <div class="form-group">
                         <label>Payment Method</label>
                         <div id="card-element"></div>
                         <div id="card-errors" class="error-message"></div>
                     </div>
                     
-                    <button type="submit" class="submit-btn">Start Pledge</button>
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="publicPledge" style="display: inline-block; margin-right: 8px;">
+                            Make my pledge public
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">Pledge your support</button>
                 </form>
             </div>
         </div>
@@ -84,17 +168,42 @@
                 </div>
                 <div class="step">
                     <div class="step-number">2</div>
-                    <h3>AI Monitoring</h3>
-                    <p>Our AI system continuously monitors JK Rowling's tweets for transphobic content using advanced analysis.</p>
+                    <h3>AI Monitoring & Manual Review</h3>
+                    <p>Our AI monitors JK Rowling's tweets in real time, and we're alerted to manually review for transphobic content.</p>
                 </div>
                 <div class="step">
                     <div class="step-number">3</div>
-                    <h3>Automatic Donation</h3>
-                    <p>When transphobic content is detected, your card is automatically charged and funds go to UK trans rights organisations.</p>
+                    <h3>Monthly Donation</h3>
+                    <p>Your preauthorised card is charged at the end of each month based on the number of transphobic posts detected.</p>
                 </div>
             </div>
         </div>
     </section>
+
+    <!-- Social Proof Section -->
+    <section class="social-proof">
+        <div class="container">
+            <div class="proof-grid">
+                <div class="proof-card">
+                    <div class="proof-number">£2,847</div>
+                    <div class="proof-label">Generated from last 3 tweets</div>
+                    <div class="proof-detail">Average £949 per transphobic post</div>
+                </div>
+                <div class="proof-card">
+                    <div class="proof-number">1,247</div>
+                    <div class="proof-label">Active pledgers</div>
+                    <div class="proof-detail">Growing community of supporters</div>
+                </div>
+                <div class="proof-card">
+                    <div class="proof-number">£18,392</div>
+                    <div class="proof-label">Total raised this month</div>
+                    <div class="proof-detail">Directly funding trans rights groups</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
 
     <!-- UK Organisations -->
     <section class="organisations">
@@ -104,10 +213,6 @@
                 <div class="org-card">
                     <h3>Mermaids</h3>
                     <p>Supporting transgender, non-binary and gender-diverse children and young people and their families.</p>
-                </div>
-                <div class="org-card">
-                    <h3>Stonewall</h3>
-                    <p>Working to create a world where every lesbian, gay, bi, trans and queer person is free to be themselves.</p>
                 </div>
                 <div class="org-card">
                     <h3>Gendered Intelligence</h3>
@@ -131,12 +236,20 @@
                     <p>Our AI system analyzes tweets for language that denies trans identities, promotes harmful stereotypes, or contributes to discrimination. The system is trained on examples from trans rights organisations and reviewed by experts.</p>
                 </div>
                 <div class="faq-item">
+                    <h3>How does the AI system work?</h3>
+                    <p>Our AI monitors JK Rowling's tweets in real time and flags potential transphobic content for human review. You can see the AI analysis system in action and review past assessments at <a href="/" class="faq-link">our analysis dashboard</a>.</p>
+                </div>
+                <div class="faq-item">
                     <h3>Can I cancel my pledge anytime?</h3>
-                    <p>Yes! You can cancel your pledge at any time through your account dashboard. No questions asked.</p>
+                    <p>Yes! You can cancel your pledge at any time by emailing us. No questions asked.</p>
                 </div>
                 <div class="faq-item">
                     <h3>What if I reach my monthly limit?</h3>
                     <p>Once you reach your monthly limit, no further charges will be made until the next month. You'll receive an email notification when you're close to your limit.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>Do you take any money from the donations?</h3>
+                    <p>We take only the amount to cover card transactions and website costs. We minimise transaction costs by charging the transactions in bulk rather than as micro-transactions.</p>
                 </div>
                 <div class="faq-item">
                     <h3>How do I know my money is going to the right place?</h3>
@@ -151,7 +264,7 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>Transphobia Pledge</h3>
+                    <h3>CounterSpeech</h3>
                     <p>Turning hate into hope, one tweet at a time.</p>
                 </div>
                 <div class="footer-section">
@@ -163,16 +276,42 @@
                 <div class="footer-section">
                     <h4>Organisations</h4>
                     <a href="https://mermaidsuk.org.uk/">Mermaids</a>
-                    <a href="https://www.stonewall.org.uk/">Stonewall</a>
                     <a href="https://genderedintelligence.co.uk/">Gendered Intelligence</a>
                     <a href="https://www.sparkle.org.uk/">Sparkle</a>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 Transphobia Pledge. Made with ❤️ for the trans community.</p>
+                <p>&copy; 2025 CounterSpeech. Made with ❤️ for the trans community.</p>
             </div>
         </div>
     </footer>
+
+    <!-- Thank You Modal -->
+    <div id="thankYouModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎉 Thank You!</h2>
+            </div>
+            <div class="modal-body">
+                <p>Your pledge has been created successfully. When JK Rowling tweets transphobic content, your donation will automatically go to UK trans rights organisations.</p>
+                
+                <div class="share-section">
+                    <h3>Help us grow stronger</h3>
+                    <p>Share this page with friends and family to help us build a stronger response to transphobia.</p>
+                    
+                    <button id="whatsappShareBtn" class="whatsapp-share-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                        </svg>
+                        Share via WhatsApp
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="closeModalBtn" class="close-modal-btn">Close</button>
+            </div>
+        </div>
+    </div>
 
     <script src="pledge.js"></script>
 </body>

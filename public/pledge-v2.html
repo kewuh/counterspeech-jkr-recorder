@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transphobia Pledge - Version 2</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="/stripe-config.js"></script>
+    <link rel="stylesheet" href="pledge-v2-styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">🏳️‍⚧️</span>
+                    <span class="logo-text">Transphobia Pledge</span>
+                </div>
+                <nav class="nav">
+                    <a href="/" class="nav-link">Home</a>
+                    <a href="/admin" class="nav-link">Admin</a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Hero Section -->
+            <section class="hero">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        Stand Against Transphobia
+                        <span class="hero-subtitle">Every Tweet Counts</span>
+                    </h1>
+                    <p class="hero-description">
+                        Join thousands of people making micro-donations to UK trans rights charities 
+                        every time JK Rowling posts transphobic content.
+                    </p>
+                    <div class="hero-stats">
+                        <div class="stat">
+                            <span class="stat-number" id="total-pledges">0</span>
+                            <span class="stat-label">Active Pledges</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number" id="total-raised">£0</span>
+                            <span class="stat-label">Total Raised</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number" id="posts-detected">0</span>
+                            <span class="stat-label">Posts Detected</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pledge Form Section -->
+            <section class="pledge-section">
+                <div class="pledge-container">
+                    <div class="pledge-card">
+                        <div class="card-header">
+                            <h2 class="card-title">Start Your Pledge</h2>
+                            <p class="card-subtitle">Choose your monthly limit and amount per transphobic post</p>
+                        </div>
+                        
+                        <form id="pledge-form" class="pledge-form">
+                            <div class="form-group">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" id="email" name="email" class="form-input" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="monthly-limit" class="form-label">Monthly Limit</label>
+                                <select id="monthly-limit" name="monthlyLimit" class="form-select" required>
+                                    <option value="">Select monthly limit</option>
+                                    <option value="5">£5 per month</option>
+                                    <option value="10">£10 per month</option>
+                                    <option value="20">£20 per month</option>
+                                    <option value="50">£50 per month</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="per-post-amount" class="form-label">Amount per Transphobic Post</label>
+                                <select id="per-post-amount" name="perPostAmount" class="form-select" required>
+                                    <option value="">Select amount per post</option>
+                                    <option value="0.30">30p per post</option>
+                                    <option value="0.50">50p per post</option>
+                                    <option value="1.00">£1 per post</option>
+                                    <option value="2.00">£2 per post</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="card-element" class="form-label">Payment Method</label>
+                                <div id="card-element" class="card-element"></div>
+                                <div id="card-errors" class="card-errors" role="alert"></div>
+                            </div>
+
+                            <button type="submit" class="submit-btn" id="submit-btn">
+                                <span class="btn-text">Start Pledge</span>
+                                <span class="btn-loading" style="display: none;">Processing...</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- How It Works -->
+            <section class="how-it-works">
+                <div class="container">
+                    <h2 class="section-title">How It Works</h2>
+                    <div class="steps-grid">
+                        <div class="step">
+                            <div class="step-icon">1</div>
+                            <h3 class="step-title">Set Your Pledge</h3>
+                            <p class="step-description">Choose your monthly limit and amount per transphobic post</p>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">2</div>
+                            <h3 class="step-title">AI Detection</h3>
+                            <p class="step-description">Our AI automatically detects transphobic content in JK Rowling's tweets</p>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">3</div>
+                            <h3 class="step-title">Monthly Billing</h3>
+                            <p class="step-description">You're charged monthly based on detected posts, up to your limit</p>
+                        </div>
+                        <div class="step">
+                            <div class="step-icon">4</div>
+                            <h3 class="step-title">Charity Donation</h3>
+                            <p class="step-description">Funds are distributed to UK trans rights charities</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charities Section -->
+            <section class="charities-section">
+                <div class="container">
+                    <h2 class="section-title">Supporting UK Trans Rights</h2>
+                    <div class="charities-grid">
+                        <div class="charity-card">
+                            <div class="charity-icon">🧜‍♀️</div>
+                            <h3 class="charity-name">Mermaids</h3>
+                            <p class="charity-description">Supporting transgender, non-binary and gender-diverse children and young people</p>
+                        </div>
+                        <div class="charity-card">
+                            <div class="charity-icon">🏳️‍🌈</div>
+                            <h3 class="charity-name">Stonewall</h3>
+                            <p class="charity-description">Working for LGBTQ+ equality and acceptance across the UK</p>
+                        </div>
+                        <div class="charity-card">
+                            <div class="charity-icon">🧠</div>
+                            <h3 class="charity-name">Gendered Intelligence</h3>
+                            <p class="charity-description">Supporting trans people and increasing understanding of gender diversity</p>
+                        </div>
+                        <div class="charity-card">
+                            <div class="charity-icon">✨</div>
+                            <h3 class="charity-name">Sparkle</h3>
+                            <p class="charity-description">The national transgender charity supporting trans people and their families</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Transparency Section -->
+            <section class="transparency-section">
+                <div class="container">
+                    <h2 class="section-title">Transparency & Trust</h2>
+                    <div class="transparency-grid">
+                        <div class="transparency-item">
+                            <h3>🔒 Secure Payments</h3>
+                            <p>All payments processed securely through Stripe</p>
+                        </div>
+                        <div class="transparency-item">
+                            <h3>📊 Open Tracking</h3>
+                            <p>View all detected posts and analysis on our public dashboard</p>
+                        </div>
+                        <div class="transparency-item">
+                            <h3>💳 No Hidden Fees</h3>
+                            <p>100% of your pledge goes to charity (minus Stripe processing fees)</p>
+                        </div>
+                        <div class="transparency-item">
+                            <h3>🔄 Cancel Anytime</h3>
+                            <p>Pause or cancel your pledge at any time</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2024 Transphobia Pledge. Supporting trans rights through collective action.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="pledge-v2.js"></script>
+</body>
+</html>
