@@ -962,11 +962,144 @@ body {
     opacity: 0.9;
 }
 
+/* Enhanced Analysis Styles */
+.enhanced-analysis {
+    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+    color: white;
+    border-left: 4px solid #6c5ce7;
+    margin-top: 10px;
+}
+
+.enhanced-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+}
+
+.enhanced-icon {
+    font-size: 18px;
+}
+
+.enhanced-title {
+    flex: 1;
+    font-size: 14px;
+}
+
+.analysis-type-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.enhanced-details {
+    padding: 15px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.enhanced-details > div {
+    margin-bottom: 10px;
+}
+
+.enhanced-details .context-understanding {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #fd79a8;
+}
+
+.enhanced-details .transphobia-assessment {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #00b894;
+}
+
+.assessment-yes {
+    color: #ff7675;
+    font-weight: 600;
+}
+
+.assessment-no {
+    color: #00b894;
+    font-weight: 600;
+}
+
+.assessment-unclear {
+    color: #fdcb6e;
+    font-weight: 600;
+}
+
+.enhanced-details .confidence-level {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #74b9ff;
+}
+
+.enhanced-details .detailed-reasoning {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #fdcb6e;
+}
+
+.enhanced-details .concerning-patterns {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #e17055;
+}
+
+.enhanced-details .overall-assessment {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #6c5ce7;
+    font-weight: 600;
+}
+
+/* Original Tweet Section */
+.original-tweet-section {
+    margin-bottom: 15px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid #00b894;
+}
+
+.original-tweet-section h4 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #00b894;
+}
+
+.tweet-embed-container {
+    margin-bottom: 10px;
+}
+
+.tweet-fallback {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 6px;
+    font-style: italic;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
 /* Responsive AI Analysis */
 @media (max-width: 768px) {
     .warning-header,
     .safe-header,
-    .no-analysis-header {
+    .no-analysis-header,
+    .enhanced-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
@@ -974,19 +1107,22 @@ body {
     
     .warning-title,
     .safe-title,
-    .no-analysis-title {
+    .no-analysis-title,
+    .enhanced-title {
         font-size: 13px;
     }
     
     .warning-details,
     .safe-details,
-    .no-analysis-details {
+    .no-analysis-details,
+    .enhanced-details {
         padding: 12px;
         font-size: 12px;
     }
     
     .severity-badge,
-    .confidence-badge {
+    .confidence-badge,
+    .analysis-type-badge {
         font-size: 9px;
         padding: 3px 6px;
     }

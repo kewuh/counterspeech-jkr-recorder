@@ -15,6 +15,9 @@ const config = {
   gemini: {
     apiKey: process.env.GEMINI_API_KEY,
   },
+  twitter: {
+    bearerToken: process.env.TWITTER_BEARER_TOKEN,
+  },
 };
 
 // Validate required configuration

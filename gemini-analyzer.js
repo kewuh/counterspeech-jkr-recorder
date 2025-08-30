@@ -9,6 +9,36 @@ class GeminiAnalyzer {
         this.supabase = new SupabaseClient();
     }
 
+    async analyzeContent(prompt) {
+        try {
+            const result = await this.model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
+            
+            // Parse the JSON response
+            let analysis;
+            try {
+                // Extract JSON from the response (it might have markdown formatting)
+                const jsonMatch = text.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    analysis = JSON.parse(jsonMatch[0]);
+                } else {
+                    throw new Error('No JSON found in response');
+                }
+            } catch (parseError) {
+                console.error('❌ Error parsing Gemini response:', parseError);
+                console.log('Raw response:', text);
+                return null;
+            }
+            
+            return analysis;
+            
+        } catch (error) {
+            console.error('❌ Error analyzing content:', error.message);
+            return null;
+        }
+    }
+
     async analyzeTweet(tweet) {
         try {
             console.log(`🔍 Analyzing tweet ${tweet.junkipedia_id}...`);
@@ -43,40 +73,17 @@ Provide your analysis in the following JSON format:
 }
 `;
 
-            const result = await this.model.generateContent(context);
-            const response = await result.response;
-            const text = response.text();
+            const analysis = await this.analyzeContent(context);
             
-            // Parse the JSON response
-            let analysis;
-            try {
-                // Extract JSON from the response (it might have markdown formatting)
-                const jsonMatch = text.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                    analysis = JSON.parse(jsonMatch[0]);
-                } else {
-                    throw new Error('No JSON found in response');
-                }
-            } catch (parseError) {
-                console.error('❌ Error parsing Gemini response:', parseError);
-                // Create a fallback analysis
-                analysis = {
-                    is_potentially_transphobic: false,
-                    confidence_level: "low",
-                    concerns: ["Unable to parse analysis"],
-                    explanation: "Error parsing Gemini response",
-                    severity: "unknown",
-                    recommendations: ["Manual review recommended"]
-                };
+            if (analysis) {
+                // Store the analysis in the database
+                await this.storeAnalysis(tweet.junkipedia_id, analysis);
+                
+                console.log(`✅ Analysis complete for tweet ${tweet.junkipedia_id}`);
+                console.log(`   🚨 Potentially transphobic: ${analysis.is_potentially_transphobic}`);
+                console.log(`   📊 Confidence: ${analysis.confidence_level}`);
+                console.log(`   ⚠️  Severity: ${analysis.severity}`);
             }
-            
-            // Store the analysis in the database
-            await this.storeAnalysis(tweet.junkipedia_id, analysis);
-            
-            console.log(`✅ Analysis complete for tweet ${tweet.junkipedia_id}`);
-            console.log(`   🚨 Potentially transphobic: ${analysis.is_potentially_transphobic}`);
-            console.log(`   📊 Confidence: ${analysis.confidence_level}`);
-            console.log(`   ⚠️  Severity: ${analysis.severity}`);
             
             return analysis;
             
@@ -195,25 +202,30 @@ Provide your analysis in the following JSON format:
     }
 }
 
-// Run the analysis
-async function main() {
-    const analyzer = new GeminiAnalyzer();
-    
-    // Check if we have a Gemini API key
-    if (!config.gemini?.apiKey) {
-        console.log('❌ No Gemini API key found. Please add GEMINI_API_KEY to your .env file');
-        console.log('📋 Get your API key from: https://makersuite.google.com/app/apikey');
-        return;
-    }
-    
-    // Initialize the analysis table
-    await analyzer.supabase.initializeAnalysisTable();
-    
-    // Analyze all tweets
-    await analyzer.analyzeAllTweets();
-    
-    // Show summary
-    await analyzer.getAnalysisSummary();
-}
+// Export the class
+module.exports = GeminiAnalyzer;
 
-main().catch(console.error);
+// Run the analysis if this file is executed directly
+if (require.main === module) {
+    async function main() {
+        const analyzer = new GeminiAnalyzer();
+        
+        // Check if we have a Gemini API key
+        if (!config.gemini?.apiKey) {
+            console.log('❌ No Gemini API key found. Please add GEMINI_API_KEY to your .env file');
+            console.log('📋 Get your API key from: https://makersuite.google.com/app/apikey');
+            return;
+        }
+        
+        // Initialize the analysis table
+        await analyzer.supabase.initializeAnalysisTable();
+        
+        // Analyze all tweets
+        await analyzer.analyzeAllTweets();
+        
+        // Show summary
+        await analyzer.getAnalysisSummary();
+    }
+
+    main().catch(console.error);
+}

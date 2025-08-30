@@ -1,0 +1,16 @@
+{
+  "total_calls": 6,
+  "calls_by_hour": {
+    "2025-08-30T14": 6
+  },
+  "calls_by_day": {
+    "2025-08-30": 6
+  },
+  "calls_by_week": {
+    "2025-W35": 6
+  },
+  "calls_by_month": {
+    "2025-08": 6
+  },
+  "last_updated": "2025-08-30T14:23:08.872Z"
+}

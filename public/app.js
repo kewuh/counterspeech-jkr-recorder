@@ -251,6 +251,26 @@ async function loadTweets() {
         if (analysesError) {
             console.warn('⚠️ Could not fetch analysis data:', analysesError.message);
         }
+
+        // Fetch enhanced reply analysis data
+        console.log('📡 Fetching enhanced reply analysis data from Supabase...');
+        const { data: replyAnalyses, error: replyAnalysesError } = await supabase
+            .from('reply_analysis')
+            .select('*');
+        
+        if (replyAnalysesError) {
+            console.warn('⚠️ Could not fetch reply analysis data:', replyAnalysesError.message);
+        }
+
+        // Fetch reply contexts data
+        console.log('📡 Fetching reply contexts data from Supabase...');
+        const { data: replyContexts, error: replyContextsError } = await supabase
+            .from('reply_contexts')
+            .select('*');
+        
+        if (replyContextsError) {
+            console.warn('⚠️ Could not fetch reply contexts data:', replyContextsError.message);
+        }
         
         // Fetch article content data separately
         console.log('📡 Fetching article content from Supabase...');
@@ -265,10 +285,14 @@ async function loadTweets() {
         // Combine tweets with their analysis and article data
         const tweetsWithAnalysis = tweets.map(tweet => {
             const analysis = analyses?.find(a => a.tweet_id === tweet.junkipedia_id);
+            const replyAnalysis = replyAnalyses?.find(a => a.reply_tweet_id === tweet.junkipedia_id);
+            const replyContext = replyContexts?.find(c => c.reply_tweet_id === tweet.junkipedia_id);
             const linkedArticles = articles?.filter(a => a.tweet_id === tweet.junkipedia_id);
             return {
                 ...tweet,
                 tweet_analysis: analysis || null,
+                reply_analysis: replyAnalysis || null,
+                reply_context: replyContext || null,
                 linked_articles: linkedArticles || []
             };
         });
@@ -478,6 +502,73 @@ function createTweetElement(tweet) {
                 </div>
             `;
             analysisContainer.appendChild(noAnalysis);
+        }
+    }
+
+    // Add Enhanced Reply Analysis (if available)
+    const replyAnalysis = tweet.reply_analysis;
+    if (replyAnalysis) {
+        const analysisContainer = template.querySelector('.ai-analysis');
+        if (analysisContainer) {
+            const enhancedAnalysis = document.createElement('div');
+            enhancedAnalysis.className = 'enhanced-analysis';
+            
+            // Create original tweet embed if we have the tweet ID
+            let originalTweetEmbed = '';
+            if (replyAnalysis.original_tweet_id && tweet.reply_context) {
+                originalTweetEmbed = `
+                    <div class="original-tweet-section">
+                        <h4>Original Tweet Being Replied To:</h4>
+                        <div class="tweet-embed-container">
+                            <blockquote class="twitter-tweet" data-theme="light">
+                                <a href="https://twitter.com/x/status/${replyAnalysis.original_tweet_id}"></a>
+                            </blockquote>
+                        </div>
+                        <div class="tweet-fallback">
+                            <strong>@${tweet.reply_context.original_user_username || 'hyperstiti0n'}:</strong>
+                            "${tweet.reply_context.original_tweet_text || 'Tweet content not available'}"
+                        </div>
+                    </div>
+                `;
+            }
+            
+            enhancedAnalysis.innerHTML = `
+                <div class="enhanced-header">
+                    <span class="enhanced-icon">🔍</span>
+                    <span class="enhanced-title">Enhanced Analysis (Full Context)</span>
+                    <span class="analysis-type-badge">Reply Context</span>
+                </div>
+                <div class="enhanced-details">
+                    ${originalTweetEmbed}
+                    <div class="context-understanding">
+                        <strong>Context:</strong> ${replyAnalysis.analysis_result?.context_understanding || 'N/A'}
+                    </div>
+                    <div class="transphobia-assessment">
+                        <strong>Transphobia Detected:</strong> 
+                        <span class="assessment-${replyAnalysis.analysis_result?.transphobia_detected?.toLowerCase() || 'unclear'}">
+                            ${replyAnalysis.analysis_result?.transphobia_detected || 'Unclear'}
+                        </span>
+                    </div>
+                    <div class="confidence-level">
+                        <strong>Confidence:</strong> ${replyAnalysis.analysis_result?.confidence_level || 'N/A'}
+                    </div>
+                    <div class="detailed-reasoning">
+                        <strong>Detailed Analysis:</strong> ${replyAnalysis.analysis_result?.detailed_reasoning || 'N/A'}
+                    </div>
+                    ${replyAnalysis.analysis_result?.concerning_patterns && replyAnalysis.analysis_result.concerning_patterns !== 'None' ? `
+                        <div class="concerning-patterns">
+                            <strong>Concerning Patterns:</strong> ${replyAnalysis.analysis_result.concerning_patterns}
+                        </div>
+                    ` : ''}
+                    <div class="overall-assessment">
+                        <strong>Overall Assessment:</strong> ${replyAnalysis.analysis_result?.overall_assessment || 'N/A'}
+                    </div>
+                    <div class="analysis-meta">
+                        Enhanced Analysis: ${formatDate(new Date(replyAnalysis.analyzed_at))}
+                    </div>
+                </div>
+            `;
+            analysisContainer.appendChild(enhancedAnalysis);
         }
     }
     
