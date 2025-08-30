@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Twitter Widgets -->
-    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+    <!-- Twitter Widgets removed -->
 </head>
 <body>
     <div class="container">
@@ -28,14 +28,6 @@
                         <span class="stat-number" id="totalPosts">-</span>
                         <span class="stat-label">Posts</span>
                     </div>
-                    <div class="stat">
-                        <span class="stat-number" id="totalLikes">-</span>
-                        <span class="stat-label">Total Likes</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number" id="avgEngagement">-</span>
-                        <span class="stat-label">Avg Engagement</span>
-                    </div>
                 </div>
             </div>
         </header>
@@ -51,12 +43,17 @@
                 <button class="filter-btn" data-filter="recent">Recent</button>
                 <button class="filter-btn" data-filter="popular">Popular</button>
                 <button class="filter-btn" data-filter="replies">Replies</button>
+                <button class="filter-btn" data-filter="transphobic">🚨 Flagged</button>
+                <button class="filter-btn" data-filter="safe">✅ Safe</button>
             </div>
         </div>
         
-        <!-- Tweet Count Info -->
-        <div class="tweet-count-info">
-            <p>Showing all available tweets from JK Rowling</p>
+        <!-- Status Info -->
+        <div class="status-info">
+            <div class="status-item">
+                <i class="fas fa-sync-alt"></i>
+                <span>Last Sync: <span id="lastSync">Loading...</span></span>
+            </div>
         </div>
 
         <!-- Loading State -->
@@ -111,10 +108,7 @@
                     <div class="media-gallery"></div>
                 </div>
                 
-                <!-- Embedded Tweet (for replies) -->
-                <div class="embedded-tweet" style="display: none;">
-                    <div class="embedded-tweet-container"></div>
-                </div>
+                <!-- Embedded Tweet functionality removed -->
                 
                 <!-- Reply Context -->
                 <div class="reply-context" style="display: none;">
@@ -131,10 +125,6 @@
                     <i class="fas fa-external-link-alt"></i>
                     <span>View on Twitter</span>
                 </a>
-                <button class="tweet-action embed-btn" style="display: none;">
-                    <i class="fas fa-code"></i>
-                    <span>Embed Tweet</span>
-                </button>
             </div>
             
             <div class="tweet-engagement">
@@ -151,10 +141,17 @@
                     <span class="replies-count"></span>
                 </div>
             </div>
+            
+            <!-- AI Analysis Container -->
+            <div class="ai-analysis" style="display: none;"></div>
         </article>
     </template>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.0/dist/umd/supabase.min.js"></script>
+    <script>
+        // Check if Supabase is loaded
+        console.log('🔧 Checking Supabase client availability...');
+    </script>
     <script src="app.js"></script>
 </body>
 </html>

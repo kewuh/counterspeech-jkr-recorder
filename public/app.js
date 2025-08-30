@@ -1,9 +1,29 @@
 // Supabase Configuration
-const SUPABASE_URL = 'https://fnkjqwfuvsbwmjjfhxmw.supabase.co'; // Replace with your Supabase URL
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZua2pxd2Z1dnNid21qamZoeG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0MTc3NjMsImV4cCI6MjA3MTk5Mzc2M30.EI38rGygijyxeaZEM5u313mQJA61q5mRips85lVM5_c'; // Replace with your Supabase anon key
+const SUPABASE_URL = 'https://fnkjqwfuvsbwmjjfhxmw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZua2pxd2Z1dnNid21qamZoeG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0MTc3NjMsImV4cCI6MjA3MTk5Mzc2M30.EI38rGygijyxeaZEM5u313mQJA61q5mRips85lVM5_c';
 
 // Initialize Supabase client
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let supabase;
+
+// Function to initialize Supabase client
+function initializeSupabase() {
+    try {
+        if (typeof window.supabase === 'undefined') {
+            throw new Error('Supabase client not loaded');
+        }
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('🔧 Supabase client initialized successfully');
+        return true;
+    } catch (error) {
+        console.error('❌ Failed to initialize Supabase client:', error);
+        return false;
+    }
+}
+
+// Debug Supabase connection
+console.log('🔧 Initializing Supabase client...');
+console.log('📡 Supabase URL:', SUPABASE_URL);
+console.log('🔑 Supabase Key:', SUPABASE_ANON_KEY.substring(0, 20) + '...');
 
 // App state
 let allTweets = [];
@@ -23,53 +43,240 @@ const tweetTemplate = document.getElementById('tweetTemplate');
 
 // Stats elements
 const totalPostsEl = document.getElementById('totalPosts');
-const totalLikesEl = document.getElementById('totalLikes');
-const avgEngagementEl = document.getElementById('avgEngagement');
+const lastSyncEl = document.getElementById('lastSync');
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', () => {
-    loadTweets();
+    console.log('🚀 App initializing...');
+    
+    // Setup event listeners and modal first
     setupEventListeners();
     createModal();
+    
+    // Wait for Supabase client to load
+    waitForSupabase().then(() => {
+        // Test Supabase connection and load tweets
+        testSupabaseConnection().then(() => {
+            loadTweets();
+        }).catch(() => {
+            // If connection fails, loadTweets will be called by testSupabaseConnection
+            console.log('⚠️ Supabase connection failed, using fallback data');
+        });
+    }).catch(() => {
+        // If Supabase client fails to load, show sample data
+        console.log('⚠️ Supabase client failed to load, showing sample data');
+        showSampleData();
+    });
 });
+
+// Wait for Supabase client to load
+function waitForSupabase() {
+    return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds max
+        
+        const checkSupabase = () => {
+            attempts++;
+            
+            if (typeof window.supabase !== 'undefined') {
+                console.log('✅ Supabase client loaded after', attempts * 100, 'ms');
+                resolve();
+            } else if (attempts >= maxAttempts) {
+                console.error('❌ Supabase client failed to load after 5 seconds');
+                reject(new Error('Supabase client timeout'));
+            } else {
+                setTimeout(checkSupabase, 100);
+            }
+        };
+        
+        checkSupabase();
+    });
+}
+
+// Test Supabase connection
+async function testSupabaseConnection() {
+    try {
+        console.log('🧪 Testing Supabase connection...');
+        
+        // Initialize Supabase client
+        if (!initializeSupabase()) {
+            throw new Error('Failed to initialize Supabase client');
+        }
+        
+        const { data, error } = await supabase
+            .from('jk_rowling_posts')
+            .select('count')
+            .limit(1);
+        
+        if (error) {
+            console.error('❌ Supabase connection failed:', error);
+            throw error;
+        }
+        
+        console.log('✅ Supabase connection successful');
+    } catch (error) {
+        console.error('❌ Failed to connect to Supabase:', error);
+        showError('Failed to connect to database: ' + error.message);
+        
+        // Show sample data for testing
+        console.log('📋 Loading sample data for testing...');
+        allTweets = [
+            {
+                id: 1,
+                content: "Sample tweet for testing the interface",
+                published_at: new Date().toISOString(),
+                url: "#",
+                engagement_metrics: { likes: 100, retweets: 50, replies: 25 },
+                tweet_analysis: {
+                    is_potentially_transphobic: true,
+                    confidence_level: "high",
+                    concerns: ["Sample concern"],
+                    explanation: "This is a sample analysis for testing",
+                    severity: "medium",
+                    recommendations: ["Sample recommendation"],
+                    analyzed_at: new Date().toISOString()
+                }
+            }
+        ];
+        filteredTweets = [...allTweets];
+        updateStats();
+        displayTweets();
+        showLoading(false);
+    }
+}
+
+// Show sample data for testing
+function showSampleData() {
+    console.log('📋 Loading sample data for testing...');
+    allTweets = [
+        {
+            id: 1,
+            content: "Sample tweet for testing the interface - this would be a real tweet from JK Rowling",
+            published_at: new Date().toISOString(),
+            url: "#",
+            engagement_metrics: { likes: 100, retweets: 50, replies: 25 },
+            tweet_analysis: {
+                is_potentially_transphobic: true,
+                confidence_level: "high",
+                concerns: ["Sample concern for testing"],
+                explanation: "This is a sample analysis for testing the interface. In a real scenario, this would contain the AI's analysis of the tweet content.",
+                severity: "medium",
+                recommendations: ["Sample recommendation for testing"],
+                analyzed_at: new Date().toISOString()
+            }
+        },
+        {
+            id: 2,
+            content: "Another sample tweet that would be safe according to AI analysis",
+            published_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+            url: "#",
+            engagement_metrics: { likes: 75, retweets: 30, replies: 15 },
+            tweet_analysis: {
+                is_potentially_transphobic: false,
+                confidence_level: "high",
+                concerns: [],
+                explanation: "This sample tweet appears to be safe and does not contain transphobic content.",
+                severity: "none",
+                recommendations: [],
+                analyzed_at: new Date().toISOString()
+            }
+        }
+    ];
+    filteredTweets = [...allTweets];
+    updateStats();
+    displayTweets();
+    showLoading(false);
+}
 
 // Setup event listeners
 function setupEventListeners() {
+    console.log('🔧 Setting up event listeners...');
+    
     // Search functionality
     searchInput.addEventListener('input', debounce(handleSearch, 300));
+    console.log('✅ Search input listener added');
     
     // Filter buttons
-    filterButtons.forEach(btn => {
+    console.log('🔍 Setting up filter buttons...');
+    filterButtons.forEach((btn, index) => {
+        console.log(`🔧 Setting up filter button ${index}:`, btn.textContent, 'with filter:', btn.dataset.filter);
         btn.addEventListener('click', () => {
+            console.log('🎯 Filter button clicked:', btn.textContent, 'filter:', btn.dataset.filter);
             filterButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentFilter = btn.dataset.filter;
+            console.log('🔄 Current filter set to:', currentFilter);
+            
+            // Clear search when switching filters
+            searchInput.value = '';
+            
             applyFilters();
         });
     });
+    console.log(`✅ ${filterButtons.length} filter buttons set up`);
     
     // Load more button
     loadMoreBtn.addEventListener('click', loadMoreTweets);
+    console.log('✅ Load more button listener added');
 }
 
 // Load tweets from Supabase
 async function loadTweets() {
     try {
+        console.log('🔄 Starting to load tweets...');
         showLoading(true);
         
-        const { data: tweets, error } = await supabase
+        if (!supabase) {
+            throw new Error('Supabase client not initialized');
+        }
+        
+        // Fetch tweets first
+        console.log('📡 Fetching tweets from Supabase...');
+        const { data: tweets, error: tweetsError } = await supabase
             .from('jk_rowling_posts')
             .select('*')
             .order('published_at', { ascending: false })
-            .limit(1000); // Load up to 1000 tweets for better pagination
+            .limit(1000);
         
-        if (error) {
-            console.error('Error loading tweets:', error);
-            showError('Failed to load tweets');
-            return;
+        if (tweetsError) {
+            throw tweetsError;
         }
         
-        allTweets = tweets || [];
+        // Fetch analysis data separately
+        console.log('📡 Fetching analysis data from Supabase...');
+        const { data: analyses, error: analysesError } = await supabase
+            .from('tweet_analysis')
+            .select('*');
+        
+        if (analysesError) {
+            console.warn('⚠️ Could not fetch analysis data:', analysesError.message);
+        }
+        
+        // Fetch article content data separately
+        console.log('📡 Fetching article content from Supabase...');
+        const { data: articles, error: articlesError } = await supabase
+            .from('article_content')
+            .select('*');
+        
+        if (articlesError) {
+            console.warn('⚠️ Could not fetch article content:', articlesError.message);
+        }
+        
+        // Combine tweets with their analysis and article data
+        const tweetsWithAnalysis = tweets.map(tweet => {
+            const analysis = analyses?.find(a => a.tweet_id === tweet.junkipedia_id);
+            const linkedArticles = articles?.filter(a => a.tweet_id === tweet.junkipedia_id);
+            return {
+                ...tweet,
+                tweet_analysis: analysis || null,
+                linked_articles: linkedArticles || []
+            };
+        });
+        
+        console.log('✅ Tweets loaded successfully:', tweetsWithAnalysis?.length || 0, 'tweets');
+        console.log('📊 Analysis data found:', analyses?.length || 0, 'analyses');
+        console.log('📄 Article content found:', articles?.length || 0, 'articles');
+        allTweets = tweetsWithAnalysis || [];
         filteredTweets = [...allTweets];
         
         updateStats();
@@ -77,8 +284,8 @@ async function loadTweets() {
         showLoading(false);
         
     } catch (error) {
-        console.error('Error:', error);
-        showError('Failed to load tweets');
+        console.error('❌ Error:', error);
+        showError('Failed to load tweets: ' + error.message);
         showLoading(false);
     }
 }
@@ -137,6 +344,143 @@ function createTweetElement(tweet) {
         twitterLink.style.display = 'none';
     }
     
+    // Add AI Analysis Results
+    const analysis = tweet.tweet_analysis;
+    if (analysis) {
+        const analysisContainer = template.querySelector('.ai-analysis');
+        if (analysisContainer) {
+            analysisContainer.style.display = 'block';
+            
+            // Add transphobia warning if flagged
+            if (analysis.is_potentially_transphobic) {
+                const warning = document.createElement('div');
+                warning.className = 'transphobia-warning';
+                warning.innerHTML = `
+                    <div class="warning-header">
+                        <span class="warning-icon">⚠️</span>
+                        <span class="warning-title">AI Analysis: Potentially Transphobic Content</span>
+                        <span class="severity-badge severity-${analysis.severity}">${analysis.severity.toUpperCase()}</span>
+                    </div>
+                    <div class="warning-details">
+                        <div class="confidence">Confidence: ${analysis.confidence_level}</div>
+                        <div class="concerns">
+                            <strong>Concerns:</strong>
+                            <ul>
+                                ${(analysis.concerns || []).map(concern => `<li>${concern}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="explanation">
+                            <strong>Analysis:</strong> ${analysis.explanation}
+                        </div>
+
+                        ${analysis.media_analysis && analysis.media_analysis !== 'Not analyzed' ? `
+                            <div class="media-analysis">
+                                <strong>Media Analysis:</strong> ${analysis.media_analysis}
+                            </div>
+                        ` : ''}
+                        ${analysis.article_analysis && analysis.article_analysis !== 'No articles to analyze' ? `
+                            <div class="article-analysis">
+                                <strong>Article Analysis:</strong> ${analysis.article_analysis}
+                            </div>
+                        ` : ''}
+                        ${analysis.combined_analysis && analysis.combined_analysis !== 'Tweet only analysis' ? `
+                            <div class="combined-analysis">
+                                <strong>Combined Analysis:</strong> ${analysis.combined_analysis}
+                            </div>
+                        ` : ''}
+                        ${analysis.articles_analyzed && analysis.articles_analyzed > 0 ? `
+                            <div class="articles-count">
+                                <strong>Articles Analyzed:</strong> ${analysis.articles_analyzed}
+                            </div>
+                        ` : ''}
+                        ${analysis.images_analyzed && analysis.images_analyzed > 0 ? `
+                            <div class="images-count">
+                                <strong>Images Analyzed:</strong> ${analysis.images_analyzed}
+                            </div>
+                        ` : ''}
+                        ${tweet.linked_articles && tweet.linked_articles.length > 0 ? `
+                            <div class="linked-articles">
+                                <strong>Linked Articles:</strong>
+                                <ul>
+                                    ${tweet.linked_articles.map(article => `
+                                        <li>
+                                            <a href="${article.url}" target="_blank">${article.title || article.url}</a>
+                                            ${article.word_count > 10 ? ` (${article.word_count} words)` : ''}
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        <div class="analysis-meta">
+                            Analyzed: ${formatDate(new Date(analysis.analyzed_at))}
+                        </div>
+                    </div>
+                `;
+                analysisContainer.appendChild(warning);
+            } else {
+                // Show non-transphobic analysis
+                const safeAnalysis = document.createElement('div');
+                safeAnalysis.className = 'safe-analysis';
+                safeAnalysis.innerHTML = `
+                    <div class="safe-header">
+                        <span class="safe-icon">✅</span>
+                        <span class="safe-title">AI Analysis: No Transphobic Content Detected</span>
+                        <span class="confidence-badge">${analysis.confidence_level}</span>
+                    </div>
+                    <div class="safe-details">
+                        <div class="explanation">${analysis.explanation}</div>
+                        ${analysis.media_analysis && analysis.media_analysis !== 'Not analyzed' ? `
+                            <div class="media-analysis">
+                                <strong>Media Analysis:</strong> ${analysis.media_analysis}
+                            </div>
+                        ` : ''}
+                        ${analysis.article_analysis && analysis.article_analysis !== 'No articles to analyze' ? `
+                            <div class="article-analysis">
+                                <strong>Article Analysis:</strong> ${analysis.article_analysis}
+                            </div>
+                        ` : ''}
+                        ${analysis.combined_analysis && analysis.combined_analysis !== 'Tweet only analysis' ? `
+                            <div class="combined-analysis">
+                                <strong>Combined Analysis:</strong> ${analysis.combined_analysis}
+                            </div>
+                        ` : ''}
+                        ${analysis.articles_analyzed && analysis.articles_analyzed > 0 ? `
+                            <div class="articles-count">
+                                <strong>Articles Analyzed:</strong> ${analysis.articles_analyzed}
+                            </div>
+                        ` : ''}
+                        ${analysis.images_analyzed && analysis.images_analyzed > 0 ? `
+                            <div class="images-count">
+                                <strong>Images Analyzed:</strong> ${analysis.images_analyzed}
+                            </div>
+                        ` : ''}
+                        <div class="analysis-meta">
+                            Analyzed: ${formatDate(new Date(analysis.analyzed_at))}
+                        </div>
+                    </div>
+                `;
+                analysisContainer.appendChild(safeAnalysis);
+            }
+        }
+    } else {
+        // No analysis available
+        const analysisContainer = template.querySelector('.ai-analysis');
+        if (analysisContainer) {
+            const noAnalysis = document.createElement('div');
+            noAnalysis.className = 'no-analysis';
+            noAnalysis.innerHTML = `
+                <div class="no-analysis-header">
+                    <span class="no-analysis-icon">⏳</span>
+                    <span class="no-analysis-title">AI Analysis: Pending</span>
+                </div>
+                <div class="no-analysis-details">
+                    This tweet hasn't been analyzed yet. Analysis will be available soon.
+                </div>
+            `;
+            analysisContainer.appendChild(noAnalysis);
+        }
+    }
+    
     // Handle media content
     const mediaContainer = template.querySelector('.tweet-media');
     const mediaGallery = template.querySelector('.media-gallery');
@@ -147,30 +491,49 @@ function createTweetElement(tweet) {
         mediaContainer.style.display = 'block';
     }
     
-    // Handle reply context
+    // Handle reply context (replies, quotes, retweets)
     const replyContext = template.querySelector('.reply-context');
     const replyToUser = template.querySelector('.reply-to-user');
+    const searchData = tweet.raw_data?.attributes?.search_data_fields;
     
+    // Check for different types of interactions
+    let interactionType = null;
+    let targetTweetId = null;
+    let targetUsername = null;
+    
+    // Check for replies
     if (tweet.raw_data?.attributes?.post_data?.in_reply_to_screen_name) {
         const replyToScreenName = tweet.raw_data.attributes.post_data.in_reply_to_screen_name;
         const replyToStatusId = tweet.raw_data.attributes.post_data.in_reply_to_status_id_str;
         
-        replyToUser.textContent = `@${replyToScreenName}`;
+        interactionType = 'reply';
+        targetTweetId = replyToStatusId;
+        targetUsername = replyToScreenName;
+        
+        replyToUser.textContent = `Replying to @${replyToScreenName}`;
         replyToUser.href = `https://twitter.com/${replyToScreenName}/status/${replyToStatusId}`;
         replyContext.style.display = 'block';
+    }
+    // Check for quotes
+    else if (searchData?.quoted_id) {
+        interactionType = 'quote';
+        targetTweetId = searchData.quoted_id;
         
-        // Show embed button for replies
-        const embedBtn = template.querySelector('.embed-btn');
-        embedBtn.style.display = 'inline-flex';
-        embedBtn.addEventListener('click', () => embedTweet(replyToStatusId, template.querySelector('.embedded-tweet')));
+        replyToUser.textContent = `Quoting tweet`;
+        replyToUser.href = `https://twitter.com/i/status/${searchData.quoted_id}`;
+        replyContext.style.display = 'block';
+    }
+    // Check for retweets
+    else if (searchData?.shared_id) {
+        interactionType = 'retweet';
+        targetTweetId = searchData.shared_id;
+        
+        replyToUser.textContent = `Retweeting`;
+        replyToUser.href = `https://twitter.com/i/status/${searchData.shared_id}`;
+        replyContext.style.display = 'block';
     }
     
-    // Handle embedded tweets for replies
-    const embeddedTweet = template.querySelector('.embedded-tweet');
-    if (tweet.raw_data?.attributes?.post_data?.in_reply_to_status_id_str) {
-        const replyToStatusId = tweet.raw_data.attributes.post_data.in_reply_to_status_id_str;
-        embedTweet(replyToStatusId, embeddedTweet);
-    }
+    // Embed functionality removed
     
     return template;
 }
@@ -225,26 +588,7 @@ function displayMedia(mediaGallery, mediaArray) {
     });
 }
 
-// Embed tweet using Twitter Widgets API
-function embedTweet(tweetId, container) {
-    if (!window.twttr) {
-        console.warn('Twitter Widgets not loaded');
-        return;
-    }
-    
-    const embedContainer = container.querySelector('.embedded-tweet-container');
-    embedContainer.innerHTML = '';
-    
-    window.twttr.widgets.createTweet(tweetId, embedContainer, {
-        conversation: 'none',
-        cards: 'hidden',
-        theme: 'light'
-    }).then(el => {
-        if (el) {
-            container.style.display = 'block';
-        }
-    });
-}
+// Embed tweet functionality removed
 
 // Create modal for media viewing
 function createModal() {
@@ -318,19 +662,68 @@ function handleSearch() {
     currentPage = 0;
     
     if (searchTerm === '') {
-        filteredTweets = [...allTweets];
+        // If no search term, apply current filter to all tweets
+        applyFilters();
     } else {
-        filteredTweets = allTweets.filter(tweet => 
+        // If there's a search term, filter by search first, then apply current filter
+        const searchFiltered = allTweets.filter(tweet => 
             tweet.content.toLowerCase().includes(searchTerm)
         );
+        console.log('🔍 Search filtered to:', searchFiltered.length, 'tweets');
+        
+        // Apply current filter to search results
+        let filtered = [...searchFiltered];
+        
+        switch (currentFilter) {
+            case 'recent':
+                // Already sorted by published_at desc
+                break;
+            case 'popular':
+                filtered.sort((a, b) => {
+                    const aEngagement = (a.engagement_metrics?.likes || 0) + 
+                                      (a.engagement_metrics?.retweets || 0) + 
+                                      (a.engagement_metrics?.replies || 0);
+                    const bEngagement = (b.engagement_metrics?.likes || 0) + 
+                                      (b.engagement_metrics?.retweets || 0) + 
+                                      (b.engagement_metrics?.replies || 0);
+                    return bEngagement - aEngagement;
+                });
+                break;
+            case 'replies':
+                filtered = filtered.filter(tweet => 
+                    tweet.raw_data?.attributes?.post_data?.in_reply_to_screen_name
+                );
+                break;
+            case 'transphobic':
+                filtered = filtered.filter(tweet => 
+                    tweet.tweet_analysis && tweet.tweet_analysis.is_potentially_transphobic === true
+                );
+                break;
+            case 'safe':
+                filtered = filtered.filter(tweet => 
+                    tweet.tweet_analysis && tweet.tweet_analysis.is_potentially_transphobic === false
+                );
+                break;
+            default:
+                // 'all' - no additional filtering
+                break;
+        }
+        
+        console.log('📝 Final filtered tweets after search + filter:', filtered.length);
+        filteredTweets = filtered;
+        currentPage = 0;
+        displayTweets();
     }
-    
-    applyFilters();
 }
 
 // Apply filters
 function applyFilters() {
-    let filtered = [...filteredTweets];
+    console.log('🔍 Applying filters...');
+    console.log('📊 Current filter:', currentFilter);
+    console.log('📝 All tweets:', allTweets.length);
+    
+    // Start fresh from all tweets, not from already filtered results
+    let filtered = [...allTweets];
     
     switch (currentFilter) {
         case 'recent':
@@ -352,9 +745,41 @@ function applyFilters() {
                 tweet.raw_data?.attributes?.post_data?.in_reply_to_screen_name
             );
             break;
+        case 'transphobic':
+            filtered = filtered.filter(tweet => 
+                tweet.tweet_analysis && tweet.tweet_analysis.is_potentially_transphobic === true
+            );
+            break;
+        case 'safe':
+            filtered = filtered.filter(tweet => 
+                tweet.tweet_analysis && tweet.tweet_analysis.is_potentially_transphobic === false
+            );
+            break;
         default:
             // 'all' - no additional filtering
             break;
+    }
+    
+    console.log('📝 Filtered tweets after:', filtered.length);
+    console.log('📊 Tweets with analysis:', filtered.filter(t => t.tweet_analysis).length);
+    console.log('🚨 Transphobic tweets:', filtered.filter(t => t.tweet_analysis && t.tweet_analysis.is_potentially_transphobic === true).length);
+    console.log('✅ Safe tweets:', filtered.filter(t => t.tweet_analysis && t.tweet_analysis.is_potentially_transphobic === false).length);
+    
+    // Show what filter was applied
+    console.log(`🎯 Applied filter: ${currentFilter}`);
+    
+    // Debug: Show some examples of analysis data
+    if (currentFilter === 'transphobic' || currentFilter === 'safe') {
+        const analyzedTweets = filtered.filter(t => t.tweet_analysis);
+        console.log('🔍 Sample analysis data:');
+        analyzedTweets.slice(0, 3).forEach((tweet, i) => {
+            console.log(`   Tweet ${i + 1}:`, {
+                id: tweet.junkipedia_id,
+                hasAnalysis: !!tweet.tweet_analysis,
+                isTransphobic: tweet.tweet_analysis?.is_potentially_transphobic,
+                confidence: tweet.tweet_analysis?.confidence_level
+            });
+        });
     }
     
     filteredTweets = filtered;
@@ -371,18 +796,47 @@ function loadMoreTweets() {
 function updateStats() {
     totalPostsEl.textContent = allTweets.length;
     
-    const totalLikes = allTweets.reduce((sum, tweet) => 
-        sum + (tweet.engagement_metrics?.likes || 0), 0
-    );
-    totalLikesEl.textContent = formatNumber(totalLikes);
+    // Get the most recent tweet date as last sync time
+    if (allTweets.length > 0) {
+        const mostRecentTweet = allTweets[0]; // Already sorted by published_at desc
+        const lastSyncDate = new Date(mostRecentTweet.published_at);
+        lastSyncEl.textContent = formatDateTime(lastSyncDate);
+    } else {
+        lastSyncEl.textContent = 'No data';
+    }
     
-    const totalEngagement = allTweets.reduce((sum, tweet) => 
-        sum + (tweet.engagement_metrics?.likes || 0) + 
-        (tweet.engagement_metrics?.retweets || 0) + 
-        (tweet.engagement_metrics?.replies || 0), 0
-    );
-    const avgEngagement = allTweets.length > 0 ? Math.round(totalEngagement / allTweets.length) : 0;
-    avgEngagementEl.textContent = formatNumber(avgEngagement);
+    // Calculate AI analysis statistics
+    const analyzedCount = allTweets.filter(t => t.tweet_analysis).length;
+    const transphobicCount = allTweets.filter(t => t.tweet_analysis?.is_potentially_transphobic).length;
+    const safeCount = allTweets.filter(t => t.tweet_analysis?.is_potentially_transphobic === false).length;
+    
+    // Calculate interaction statistics
+    let replyCount = 0;
+    let quoteCount = 0;
+    let retweetCount = 0;
+    
+    allTweets.forEach(tweet => {
+        const postData = tweet.raw_data?.attributes?.post_data;
+        const searchData = tweet.raw_data?.attributes?.search_data_fields;
+        
+        if (postData?.in_reply_to_screen_name) {
+            replyCount++;
+        } else if (searchData?.quoted_id) {
+            quoteCount++;
+        } else if (searchData?.shared_id) {
+            retweetCount++;
+        }
+    });
+    
+    // Log statistics
+    console.log(`📊 Statistics:`);
+    console.log(`   📝 Total tweets: ${allTweets.length}`);
+    console.log(`   🤖 Analyzed: ${analyzedCount}`);
+    console.log(`   🚨 Transphobic: ${transphobicCount}`);
+    console.log(`   ✅ Safe: ${safeCount}`);
+    console.log(`   📝 Replies: ${replyCount}`);
+    console.log(`   💬 Quotes: ${quoteCount}`);
+    console.log(`   🔄 Retweets: ${retweetCount}`);
 }
 
 // Utility functions
@@ -403,6 +857,17 @@ function formatDate(date) {
             year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
         });
     }
+}
+
+function formatDateTime(date) {
+    return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
 }
 
 function formatNumber(num) {
@@ -450,8 +915,25 @@ function hideEmptyState() {
 }
 
 function showError(message) {
-    // You can implement a toast notification here
     console.error(message);
+    
+    // Show error on page
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.innerHTML = `
+        <div style="background: #fee; border: 1px solid #fcc; padding: 15px; margin: 20px; border-radius: 8px; color: #c33;">
+            <strong>Error:</strong> ${message}
+        </div>
+    `;
+    
+    // Insert at the top of the container
+    const container = document.querySelector('.container');
+    if (container) {
+        container.insertBefore(errorDiv, container.firstChild);
+    }
+    
+    // Hide loading state
+    showLoading(false);
 }
 
 // Configuration instructions

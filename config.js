@@ -12,6 +12,9 @@ const config = {
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
     tableName: process.env.SUPABASE_TABLE_NAME || 'jk_rowling_posts',
   },
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY,
+  },
 };
 
 // Validate required configuration

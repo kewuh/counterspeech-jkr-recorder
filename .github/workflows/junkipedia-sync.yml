@@ -1,4 +1,4 @@
-name: Junkipedia to Supabase Sync
+name: Junkipedia to Supabase Sync with Analysis
 
 on:
   schedule:
@@ -33,6 +33,27 @@ jobs:
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         SUPABASE_TABLE_NAME: jk_rowling_posts
       run: node index.js
+      
+    - name: Fetch and store article content
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      run: node fetch-articles.js
+      
+    - name: Run comprehensive AI analysis on new tweets
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: |
+        # Check if Gemini API key is available
+        if [ -z "$GEMINI_API_KEY" ]; then
+          echo "⚠️ GEMINI_API_KEY not set, skipping AI analysis"
+          exit 0
+        fi
+        node comprehensive-analyzer.js
       
     - name: Run stats and log results
       env:

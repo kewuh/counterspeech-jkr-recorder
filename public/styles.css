@@ -121,22 +121,49 @@ body {
     gap: 20px;
 }
 
-/* Tweet Count Info */
-.tweet-count-info {
+/* Status Info */
+.status-info {
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(10px);
     border-radius: 12px;
-    padding: 12px 20px;
+    padding: 15px 20px;
     margin-bottom: 20px;
-    text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
-.tweet-count-info p {
-    margin: 0;
+.status-info .status-item:last-child {
+    margin-left: auto;
+    text-align: right;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     color: #666;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
+    min-width: 0;
+    flex: 1;
+}
+
+.status-item i {
+    color: #667eea;
+    font-size: 16px;
+}
+
+.status-item span {
+    color: #333;
+}
+
+.status-item span span {
+    font-weight: 600;
+    color: #667eea;
 }
 
 .search-box {
@@ -380,18 +407,7 @@ body {
     font-size: 24px;
 }
 
-/* Embedded Tweet */
-.embedded-tweet {
-    margin: 15px 0;
-    border: 1px solid #e1e5e9;
-    border-radius: 12px;
-    overflow: hidden;
-    background: #f8f9fa;
-}
-
-.embedded-tweet-container {
-    padding: 15px;
-}
+/* Embedded Tweet functionality removed */
 
 /* Reply Context */
 .reply-context {
@@ -452,13 +468,7 @@ body {
     transform: translateY(-1px);
 }
 
-.embed-btn {
-    background: #28a745;
-}
-
-.embed-btn:hover {
-    background: #218838;
-}
+/* Embed button styles removed */
 
 .tweet-engagement {
     display: flex;
@@ -600,6 +610,12 @@ body {
         text-align: center;
     }
     
+    .status-info {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
     .profile-section {
         flex-direction: column;
         text-align: center;
@@ -679,5 +695,299 @@ body {
         top: 10px;
         right: 20px;
         font-size: 30px;
+    }
+}
+
+/* AI Analysis Styles */
+.ai-analysis {
+    margin-top: 15px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Transphobia Warning */
+.transphobia-warning {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: white;
+    border-left: 4px solid #d63031;
+}
+
+.warning-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+}
+
+.warning-icon {
+    font-size: 18px;
+}
+
+.warning-title {
+    flex: 1;
+    font-size: 14px;
+}
+
+.severity-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.severity-high {
+    background: #d63031;
+    color: white;
+}
+
+.severity-medium {
+    background: #fdcb6e;
+    color: #2d3436;
+}
+
+.severity-low {
+    background: #74b9ff;
+    color: white;
+}
+
+.warning-details {
+    padding: 15px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.warning-details .confidence {
+    margin-bottom: 10px;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+.warning-details .concerns ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.warning-details .concerns li {
+    margin-bottom: 4px;
+}
+
+.warning-details .explanation {
+    margin: 12px 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-style: italic;
+}
+
+/* Recommendations section removed */
+
+.warning-details .media-analysis {
+    margin: 12px 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.warning-details .article-analysis {
+    margin: 12px 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-size: 12px;
+    border-left: 3px solid #74b9ff;
+}
+
+.warning-details .combined-analysis {
+    margin: 12px 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-size: 12px;
+    border-left: 3px solid #fdcb6e;
+}
+
+.warning-details .articles-count,
+.warning-details .images-count {
+    margin: 8px 0;
+    font-size: 11px;
+    opacity: 0.9;
+    font-weight: 600;
+}
+
+.warning-details .linked-articles {
+    margin: 12px 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-size: 12px;
+    border-left: 3px solid #00b894;
+}
+
+.warning-details .linked-articles ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.warning-details .linked-articles li {
+    margin: 4px 0;
+}
+
+.warning-details .linked-articles a {
+    color: #74b9ff;
+    text-decoration: none;
+}
+
+.warning-details .linked-articles a:hover {
+    text-decoration: underline;
+}
+
+.analysis-meta {
+    margin-top: 12px;
+    font-size: 11px;
+    opacity: 0.8;
+    text-align: right;
+}
+
+/* Safe Analysis */
+.safe-analysis {
+    background: linear-gradient(135deg, #00b894, #00a085);
+    color: white;
+    border-left: 4px solid #00b894;
+}
+
+.safe-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+}
+
+.safe-icon {
+    font-size: 18px;
+}
+
+.safe-title {
+    flex: 1;
+    font-size: 14px;
+}
+
+.confidence-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.safe-details {
+    padding: 15px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.safe-details .explanation {
+    margin-bottom: 12px;
+}
+
+.safe-details .media-analysis {
+    margin: 12px 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.safe-details .article-analysis {
+    margin: 12px 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-size: 12px;
+    border-left: 3px solid #74b9ff;
+}
+
+.safe-details .combined-analysis {
+    margin: 12px 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-size: 12px;
+    border-left: 3px solid #fdcb6e;
+}
+
+.safe-details .articles-count {
+    margin: 8px 0;
+    font-size: 11px;
+    opacity: 0.9;
+    font-weight: 600;
+}
+
+/* No Analysis */
+.no-analysis {
+    background: linear-gradient(135deg, #636e72, #2d3436);
+    color: white;
+    border-left: 4px solid #636e72;
+}
+
+.no-analysis-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+}
+
+.no-analysis-icon {
+    font-size: 18px;
+}
+
+.no-analysis-title {
+    flex: 1;
+    font-size: 14px;
+}
+
+.no-analysis-details {
+    padding: 15px;
+    font-size: 13px;
+    line-height: 1.5;
+    opacity: 0.9;
+}
+
+/* Responsive AI Analysis */
+@media (max-width: 768px) {
+    .warning-header,
+    .safe-header,
+    .no-analysis-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .warning-title,
+    .safe-title,
+    .no-analysis-title {
+        font-size: 13px;
+    }
+    
+    .warning-details,
+    .safe-details,
+    .no-analysis-details {
+        padding: 12px;
+        font-size: 12px;
+    }
+    
+    .severity-badge,
+    .confidence-badge {
+        font-size: 9px;
+        padding: 3px 6px;
     }
 }
