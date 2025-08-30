@@ -251,26 +251,6 @@ async function loadTweets() {
         if (analysesError) {
             console.warn('⚠️ Could not fetch analysis data:', analysesError.message);
         }
-
-        // Fetch enhanced reply analysis data
-        console.log('📡 Fetching enhanced reply analysis data from Supabase...');
-        const { data: replyAnalyses, error: replyAnalysesError } = await supabase
-            .from('reply_analysis')
-            .select('*');
-        
-        if (replyAnalysesError) {
-            console.warn('⚠️ Could not fetch reply analysis data:', replyAnalysesError.message);
-        }
-
-        // Fetch reply contexts data
-        console.log('📡 Fetching reply contexts data from Supabase...');
-        const { data: replyContexts, error: replyContextsError } = await supabase
-            .from('reply_contexts')
-            .select('*');
-        
-        if (replyContextsError) {
-            console.warn('⚠️ Could not fetch reply contexts data:', replyContextsError.message);
-        }
         
         // Fetch article content data separately
         console.log('📡 Fetching article content from Supabase...');
@@ -285,14 +265,10 @@ async function loadTweets() {
         // Combine tweets with their analysis and article data
         const tweetsWithAnalysis = tweets.map(tweet => {
             const analysis = analyses?.find(a => a.tweet_id === tweet.junkipedia_id);
-            const replyAnalysis = replyAnalyses?.find(a => a.reply_tweet_id === tweet.junkipedia_id);
-            const replyContext = replyContexts?.find(c => c.reply_tweet_id === tweet.junkipedia_id);
             const linkedArticles = articles?.filter(a => a.tweet_id === tweet.junkipedia_id);
             return {
                 ...tweet,
                 tweet_analysis: analysis || null,
-                reply_analysis: replyAnalysis || null,
-                reply_context: replyContext || null,
                 linked_articles: linkedArticles || []
             };
         });
@@ -502,73 +478,6 @@ function createTweetElement(tweet) {
                 </div>
             `;
             analysisContainer.appendChild(noAnalysis);
-        }
-    }
-
-    // Add Enhanced Reply Analysis (if available)
-    const replyAnalysis = tweet.reply_analysis;
-    if (replyAnalysis) {
-        const analysisContainer = template.querySelector('.ai-analysis');
-        if (analysisContainer) {
-            const enhancedAnalysis = document.createElement('div');
-            enhancedAnalysis.className = 'enhanced-analysis';
-            
-            // Create original tweet embed if we have the tweet ID
-            let originalTweetEmbed = '';
-            if (replyAnalysis.original_tweet_id && tweet.reply_context) {
-                originalTweetEmbed = `
-                    <div class="original-tweet-section">
-                        <h4>Original Tweet Being Replied To:</h4>
-                        <div class="tweet-embed-container">
-                            <blockquote class="twitter-tweet" data-theme="light">
-                                <a href="https://twitter.com/x/status/${replyAnalysis.original_tweet_id}"></a>
-                            </blockquote>
-                        </div>
-                        <div class="tweet-fallback">
-                            <strong>@${tweet.reply_context.original_user_username || 'hyperstiti0n'}:</strong>
-                            "${tweet.reply_context.original_tweet_text || 'Tweet content not available'}"
-                        </div>
-                    </div>
-                `;
-            }
-            
-            enhancedAnalysis.innerHTML = `
-                <div class="enhanced-header">
-                    <span class="enhanced-icon">🔍</span>
-                    <span class="enhanced-title">Enhanced Analysis (Full Context)</span>
-                    <span class="analysis-type-badge">Reply Context</span>
-                </div>
-                <div class="enhanced-details">
-                    ${originalTweetEmbed}
-                    <div class="context-understanding">
-                        <strong>Context:</strong> ${replyAnalysis.analysis_result?.context_understanding || 'N/A'}
-                    </div>
-                    <div class="transphobia-assessment">
-                        <strong>Transphobia Detected:</strong> 
-                        <span class="assessment-${replyAnalysis.analysis_result?.transphobia_detected?.toLowerCase() || 'unclear'}">
-                            ${replyAnalysis.analysis_result?.transphobia_detected || 'Unclear'}
-                        </span>
-                    </div>
-                    <div class="confidence-level">
-                        <strong>Confidence:</strong> ${replyAnalysis.analysis_result?.confidence_level || 'N/A'}
-                    </div>
-                    <div class="detailed-reasoning">
-                        <strong>Detailed Analysis:</strong> ${replyAnalysis.analysis_result?.detailed_reasoning || 'N/A'}
-                    </div>
-                    ${replyAnalysis.analysis_result?.concerning_patterns && replyAnalysis.analysis_result.concerning_patterns !== 'None' ? `
-                        <div class="concerning-patterns">
-                            <strong>Concerning Patterns:</strong> ${replyAnalysis.analysis_result.concerning_patterns}
-                        </div>
-                    ` : ''}
-                    <div class="overall-assessment">
-                        <strong>Overall Assessment:</strong> ${replyAnalysis.analysis_result?.overall_assessment || 'N/A'}
-                    </div>
-                    <div class="analysis-meta">
-                        Enhanced Analysis: ${formatDate(new Date(replyAnalysis.analyzed_at))}
-                    </div>
-                </div>
-            `;
-            analysisContainer.appendChild(enhancedAnalysis);
         }
     }
     
@@ -1027,6 +936,123 @@ function showError(message) {
     showLoading(false);
 }
 
+// Demo feed functionality
+function initializeDemoFeed() {
+    const demoFeed = document.getElementById('demoFeed');
+    const demoTotalPosts = document.getElementById('demoTotalPosts');
+    const demoTransphobicPosts = document.getElementById('demoTransphobicPosts');
+    const demoPledgesTriggered = document.getElementById('demoPledgesTriggered');
+    
+    let totalPosts = 0;
+    let transphobicPosts = 0;
+    let pledgesTriggered = 0;
+    
+    // Demo feed data
+    const demoFeedData = [
+        {
+            time: '2 minutes ago',
+            text: 'Just had a lovely walk in the park with my dog. Beautiful day!',
+            status: 'safe',
+            pledge: null
+        },
+        {
+            time: '5 minutes ago',
+            text: 'Trans women are women. Period. Anyone who says otherwise is spreading hate.',
+            status: 'transphobic',
+            pledge: '£2 charged to 47 pledges'
+        },
+        {
+            time: '8 minutes ago',
+            text: 'Reading a fascinating book about medieval history. Highly recommend!',
+            status: 'safe',
+            pledge: null
+        },
+        {
+            time: '12 minutes ago',
+            text: 'The idea that men can become women is a dangerous lie that threatens our society.',
+            status: 'transphobic',
+            pledge: '£5 charged to 23 pledges'
+        },
+        {
+            time: '15 minutes ago',
+            text: 'Great meeting with my publisher today. Exciting news coming soon!',
+            status: 'safe',
+            pledge: null
+        },
+        {
+            time: '20 minutes ago',
+            text: 'Biological reality matters. You cannot change your sex, only mutilate your body.',
+            status: 'transphobic',
+            pledge: '£10 charged to 15 pledges'
+        }
+    ];
+    
+    function addDemoFeedItem(item) {
+        const feedItem = document.createElement('div');
+        feedItem.className = `demo-feed-item ${item.status}`;
+        
+        feedItem.innerHTML = `
+            <div class="demo-feed-item-header">
+                <span class="demo-feed-item-time">${item.time}</span>
+                <span class="demo-feed-item-status ${item.status}">${item.status === 'transphobic' ? '🚨 Transphobic' : '✅ Safe'}</span>
+            </div>
+            <div class="demo-feed-item-text">"${item.text}"</div>
+            ${item.pledge ? `<div class="demo-feed-item-pledge">💳 ${item.pledge}</div>` : ''}
+        `;
+        
+        demoFeed.insertBefore(feedItem, demoFeed.firstChild);
+        
+        // Keep only the last 10 items
+        if (demoFeed.children.length > 10) {
+            demoFeed.removeChild(demoFeed.lastChild);
+        }
+        
+        // Update stats
+        totalPosts++;
+        if (item.status === 'transphobic') {
+            transphobicPosts++;
+            if (item.pledge) pledgesTriggered++;
+        }
+        
+        demoTotalPosts.textContent = totalPosts;
+        demoTransphobicPosts.textContent = transphobicPosts;
+        demoPledgesTriggered.textContent = pledgesTriggered;
+    }
+    
+    // Add initial items
+    demoFeedData.forEach(item => addDemoFeedItem(item));
+    
+    // Simulate real-time updates
+    setInterval(() => {
+        const newItems = [
+            {
+                time: 'Just now',
+                text: 'The gender ideology is destroying our children and families.',
+                status: 'transphobic',
+                pledge: '£3 charged to 31 pledges'
+            },
+            {
+                time: 'Just now',
+                text: 'Beautiful sunset tonight. Nature is truly amazing.',
+                status: 'safe',
+                pledge: null
+            },
+            {
+                time: 'Just now',
+                text: 'Men pretending to be women should not be in women\'s spaces.',
+                status: 'transphobic',
+                pledge: '£7 charged to 19 pledges'
+            }
+        ];
+        
+        const randomItem = newItems[Math.floor(Math.random() * newItems.length)];
+        addDemoFeedItem(randomItem);
+    }, 8000); // Add new item every 8 seconds
+}
+
+// Initialize demo feed
+initializeDemoFeed();
+
 // Configuration instructions
 console.log(`
 🚀 Enhanced JK Rowling Tweet Viewer Setup Instructions:
@@ -1037,6 +1063,7 @@ console.log(`
 4. ✅ Reply context and embedded original tweets
 5. ✅ Modal viewer for full-size media
 6. ✅ Enhanced filtering (All, Recent, Popular, Replies)
+7. ✅ Live demo feed for transphobic content detection
 
 Features included:
 - ✅ Real-time search
@@ -1050,4 +1077,5 @@ Features included:
 - ✅ Loading states
 - ✅ Error handling
 - ✅ Twitter Widgets integration
+- ✅ Live demo feed with pledge tracking
 `);

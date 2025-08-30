@@ -19,6 +19,128 @@ body {
     padding: 20px;
 }
 
+/* Demo Feed Styles */
+.demo-feed {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.demo-feed h2 {
+    margin: 0 0 10px 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.demo-feed p {
+    margin: 0 0 20px 0;
+    opacity: 0.9;
+}
+
+.demo-stats {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+.demo-stat {
+    text-align: center;
+}
+
+.demo-stat-number {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.demo-stat-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.demo-feed-container {
+    max-height: 300px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.demo-feed-item {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border-left: 4px solid #ffd700;
+    animation: slideInRight 0.5s ease;
+}
+
+.demo-feed-item.transphobic {
+    border-left-color: #e74c3c;
+    background: rgba(231, 76, 60, 0.2);
+}
+
+.demo-feed-item.safe {
+    border-left-color: #27ae60;
+    background: rgba(39, 174, 96, 0.2);
+}
+
+.demo-feed-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.demo-feed-item-time {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.demo-feed-item-status {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.demo-feed-item-status.transphobic {
+    background: #e74c3c;
+    color: white;
+}
+
+.demo-feed-item-status.safe {
+    background: #27ae60;
+    color: white;
+}
+
+.demo-feed-item-text {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 8px;
+}
+
+.demo-feed-item-pledge {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    font-style: italic;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
 /* Header Styles */
 .header {
     background: rgba(255, 255, 255, 0.95);
@@ -962,144 +1084,11 @@ body {
     opacity: 0.9;
 }
 
-/* Enhanced Analysis Styles */
-.enhanced-analysis {
-    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
-    color: white;
-    border-left: 4px solid #6c5ce7;
-    margin-top: 10px;
-}
-
-.enhanced-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 15px;
-    background: rgba(255, 255, 255, 0.1);
-    font-weight: 600;
-}
-
-.enhanced-icon {
-    font-size: 18px;
-}
-
-.enhanced-title {
-    flex: 1;
-    font-size: 14px;
-}
-
-.analysis-type-badge {
-    background: rgba(255, 255, 255, 0.2);
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.enhanced-details {
-    padding: 15px;
-    font-size: 13px;
-    line-height: 1.5;
-}
-
-.enhanced-details > div {
-    margin-bottom: 10px;
-}
-
-.enhanced-details .context-understanding {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 10px;
-    border-radius: 6px;
-    border-left: 3px solid #fd79a8;
-}
-
-.enhanced-details .transphobia-assessment {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 10px;
-    border-radius: 6px;
-    border-left: 3px solid #00b894;
-}
-
-.assessment-yes {
-    color: #ff7675;
-    font-weight: 600;
-}
-
-.assessment-no {
-    color: #00b894;
-    font-weight: 600;
-}
-
-.assessment-unclear {
-    color: #fdcb6e;
-    font-weight: 600;
-}
-
-.enhanced-details .confidence-level {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 10px;
-    border-radius: 6px;
-    border-left: 3px solid #74b9ff;
-}
-
-.enhanced-details .detailed-reasoning {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 10px;
-    border-radius: 6px;
-    border-left: 3px solid #fdcb6e;
-}
-
-.enhanced-details .concerning-patterns {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 10px;
-    border-radius: 6px;
-    border-left: 3px solid #e17055;
-}
-
-.enhanced-details .overall-assessment {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 10px;
-    border-radius: 6px;
-    border-left: 3px solid #6c5ce7;
-    font-weight: 600;
-}
-
-/* Original Tweet Section */
-.original-tweet-section {
-    margin-bottom: 15px;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    border-left: 4px solid #00b894;
-}
-
-.original-tweet-section h4 {
-    margin: 0 0 10px 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: #00b894;
-}
-
-.tweet-embed-container {
-    margin-bottom: 10px;
-}
-
-.tweet-fallback {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 10px;
-    border-radius: 6px;
-    font-style: italic;
-    font-size: 12px;
-    line-height: 1.4;
-}
-
 /* Responsive AI Analysis */
 @media (max-width: 768px) {
     .warning-header,
     .safe-header,
-    .no-analysis-header,
-    .enhanced-header {
+    .no-analysis-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
@@ -1107,22 +1096,19 @@ body {
     
     .warning-title,
     .safe-title,
-    .no-analysis-title,
-    .enhanced-title {
+    .no-analysis-title {
         font-size: 13px;
     }
     
     .warning-details,
     .safe-details,
-    .no-analysis-details,
-    .enhanced-details {
+    .no-analysis-details {
         padding: 12px;
         font-size: 12px;
     }
     
     .severity-badge,
-    .confidence-badge,
-    .analysis-type-badge {
+    .confidence-badge {
         font-size: 9px;
         padding: 3px 6px;
     }
