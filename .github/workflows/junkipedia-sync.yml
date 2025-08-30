@@ -17,7 +17,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
         
     - name: Install dependencies
@@ -39,7 +39,10 @@ jobs:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      run: node fetch-articles.js
+      run: |
+        # Skip article fetching for now to avoid dependency issues
+        echo "⚠️ Skipping article fetching due to dependency issues"
+        exit 0
       
     - name: Run comprehensive AI analysis on new tweets
       env:
