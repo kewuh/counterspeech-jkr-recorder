@@ -18,6 +18,11 @@ class NewReplyDetector {
      */
     async checkForNewContent() {
         console.log('🔍 Checking for new content (replies and reposts)...\n');
+        console.log('🔧 Environment check:');
+        console.log(`   📡 Supabase URL: ${process.env.SUPABASE_URL ? 'Set' : 'Missing'}`);
+        console.log(`   🔑 Supabase Key: ${process.env.SUPABASE_ANON_KEY ? 'Set' : 'Missing'}`);
+        console.log(`   🐦 Twitter Token: ${process.env.TWITTER_BEARER_TOKEN ? 'Set' : 'Missing'}`);
+        console.log(`   🤖 Gemini Key: ${process.env.GEMINI_API_KEY ? 'Set' : 'Missing'}`);
         
         const startTime = new Date();
         
@@ -46,11 +51,15 @@ class NewReplyDetector {
             await this.checkForNewReplies(lastProcessedTime);
             
             // Update sync tracking record
+            console.log('\n🔄 Updating sync tracking...');
             await this.updateSyncTracking(startTime, new Date());
+            console.log('✅ Sync tracking update completed');
             
         } catch (error) {
             console.error('❌ Error in checkForNewContent:', error.message);
+            console.error('❌ Error stack:', error.stack);
             // Update sync tracking even on error
+            console.log('🔄 Updating sync tracking with error status...');
             await this.updateSyncTracking(startTime, new Date(), 'error');
         }
     }
