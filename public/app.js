@@ -139,9 +139,10 @@ async function testSupabaseConnection() {
             }
         ];
         filteredTweets = [...allTweets];
-        updateStats();
-        displayTweets();
-        showLoading(false);
+        updateStats().then(() => {
+            displayTweets();
+            showLoading(false);
+        });
     }
 }
 
@@ -183,9 +184,10 @@ function showSampleData() {
         }
     ];
     filteredTweets = [...allTweets];
-    updateStats();
-    displayTweets();
-    showLoading(false);
+    updateStats().then(() => {
+        displayTweets();
+        showLoading(false);
+    });
 }
 
 // Setup event listeners
@@ -263,15 +265,17 @@ async function loadTweets() {
         }
         
         // Combine tweets with their analysis and article data
-        const tweetsWithAnalysis = tweets.map(tweet => {
-            const analysis = analyses?.find(a => a.tweet_id === tweet.junkipedia_id);
-            const linkedArticles = articles?.filter(a => a.tweet_id === tweet.junkipedia_id);
-            return {
-                ...tweet,
-                tweet_analysis: analysis || null,
-                linked_articles: linkedArticles || []
-            };
-        });
+        const tweetsWithAnalysis = tweets
+            .filter(tweet => tweet.post_type !== 'sync_tracking') // Filter out sync tracking records
+            .map(tweet => {
+                const analysis = analyses?.find(a => a.tweet_id === tweet.junkipedia_id);
+                const linkedArticles = articles?.filter(a => a.tweet_id === tweet.junkipedia_id);
+                return {
+                    ...tweet,
+                    tweet_analysis: analysis || null,
+                    linked_articles: linkedArticles || []
+                };
+            });
         
         console.log('✅ Tweets loaded successfully:', tweetsWithAnalysis?.length || 0, 'tweets');
         console.log('📊 Analysis data found:', analyses?.length || 0, 'analyses');
@@ -279,9 +283,10 @@ async function loadTweets() {
         allTweets = tweetsWithAnalysis || [];
         filteredTweets = [...allTweets];
         
-        updateStats();
-        displayTweets();
-        showLoading(false);
+        updateStats().then(() => {
+            displayTweets();
+            showLoading(false);
+        });
         
     } catch (error) {
         console.error('❌ Error:', error);
@@ -323,6 +328,19 @@ function displayTweets() {
 // Create tweet element from template
 function createTweetElement(tweet) {
     const template = tweetTemplate.content.cloneNode(true);
+    
+    // Handle repost indicator
+    const repostIndicator = template.querySelector('.repost-indicator');
+    if (tweet.post_type === 'repost' && tweet.raw_data?.original_tweet) {
+        repostIndicator.style.display = 'block';
+        
+        const originalTweet = tweet.raw_data.original_tweet;
+        const originalAuthor = originalTweet.author_username || originalTweet.author_id || 'unknown';
+        const originalTime = originalTweet.created_at ? formatRelativeTime(new Date(originalTweet.created_at)) : '';
+        
+        repostIndicator.querySelector('.repost-author').textContent = `@${originalAuthor}`;
+        repostIndicator.querySelector('.repost-time').textContent = originalTime;
+    }
     
     // Set tweet content
     template.querySelector('.tweet-text').textContent = tweet.content;
@@ -793,12 +811,27 @@ function loadMoreTweets() {
 }
 
 // Update statistics
-function updateStats() {
+async function updateStats() {
     totalPostsEl.textContent = allTweets.length;
     
-    // Show current time as last sync time
-    const currentTime = new Date();
-    lastSyncEl.textContent = formatDateTime(currentTime);
+    // Get last sync time from sync tracking record
+    try {
+        const lastSyncTime = await getLastSyncTime();
+        if (lastSyncTime) {
+            console.log('🔄 Setting last sync time from database:', lastSyncTime);
+            lastSyncEl.textContent = formatDateTime(new Date(lastSyncTime));
+        } else {
+            // Fallback to current time if no sync tracking found
+            console.log('⚠️ No sync tracking found, using current time');
+            const currentTime = new Date();
+            lastSyncEl.textContent = formatDateTime(currentTime);
+        }
+    } catch (error) {
+        // Fallback to current time on error
+        console.error('❌ Error getting last sync time:', error);
+        const currentTime = new Date();
+        lastSyncEl.textContent = formatDateTime(currentTime);
+    }
     
     // Calculate AI analysis statistics
     const analyzedCount = allTweets.filter(t => t.tweet_analysis).length;
@@ -834,6 +867,46 @@ function updateStats() {
     console.log(`   🔄 Retweets: ${retweetCount}`);
 }
 
+// Get last sync time from database
+async function getLastSyncTime() {
+    try {
+        console.log('🔍 getLastSyncTime: Starting...');
+        
+        if (!supabase) {
+            console.log('❌ getLastSyncTime: Supabase not initialized');
+            return null;
+        }
+
+        console.log('🔍 getLastSyncTime: Querying database...');
+        const { data: syncRecord, error } = await supabase
+            .from('jk_rowling_posts')
+            .select('published_at, raw_data')
+            .eq('junkipedia_id', 'sync_tracking_last_run')
+            .single();
+
+        console.log('🔍 getLastSyncTime: Query result:', { error: error?.message, recordFound: !!syncRecord });
+
+        if (error || !syncRecord) {
+            console.log('❌ getLastSyncTime: No sync record found or error:', error?.message);
+            return null;
+        }
+
+        console.log('🔍 getLastSyncTime: Sync record found:', {
+            published_at: syncRecord.published_at,
+            raw_data: syncRecord.raw_data
+        });
+
+        // Return the last cron run time from raw_data, or fallback to published_at
+        const lastSyncTime = syncRecord.raw_data?.last_cron_run || syncRecord.published_at;
+        console.log('✅ getLastSyncTime: Returning:', lastSyncTime);
+        return lastSyncTime;
+
+    } catch (error) {
+        console.error('❌ getLastSyncTime: Error:', error);
+        return null;
+    }
+}
+
 // Utility functions
 function formatDate(date) {
     const now = new Date();
@@ -851,6 +924,20 @@ function formatDate(date) {
             day: 'numeric',
             year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
         });
+    }
+}
+
+function formatRelativeTime(date) {
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) {
+        return 'Just now';
+    } else if (diffInHours < 24) {
+        return `${diffInHours}h`;
+    } else {
+        const diffInDays = Math.floor(diffInHours / 24);
+        return `${diffInDays}d`;
     }
 }
 

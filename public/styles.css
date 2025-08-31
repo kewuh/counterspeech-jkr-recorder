@@ -406,6 +406,58 @@ body {
     margin-bottom: 15px;
 }
 
+/* Repost Indicator */
+.repost-indicator {
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: rgba(29, 161, 242, 0.1);
+    border-radius: 8px;
+    border-left: 3px solid #1da1f2;
+}
+
+.repost-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #1da1f2;
+}
+
+.repost-header i {
+    font-size: 12px;
+}
+
+.repost-text {
+    font-weight: 500;
+}
+
+.repost-author {
+    color: #666;
+    font-weight: 500;
+}
+
+.repost-time {
+    color: #999;
+    font-size: 12px;
+}
+
+/* Mobile optimizations for repost indicator */
+@media (max-width: 768px) {
+    .repost-indicator {
+        padding: 6px 10px;
+        margin-bottom: 10px;
+    }
+    
+    .repost-header {
+        font-size: 13px;
+        gap: 6px;
+    }
+    
+    .repost-time {
+        font-size: 11px;
+    }
+}
+
 /* Media Gallery */
 .tweet-media {
     margin: 15px 0;

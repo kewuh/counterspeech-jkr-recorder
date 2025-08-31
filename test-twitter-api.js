@@ -1,86 +1,110 @@
-const TwitterAPIClient = require('./twitter-api');
+const axios = require('axios');
+const config = require('./config');
 
 async function testTwitterAPI() {
-    console.log('🧪 Testing Twitter API Integration\n');
-    
-    const twitter = new TwitterAPIClient();
-    
-    try {
-        // Test connection
-        console.log('1️⃣ Testing API Connection...');
-        const connectionTest = await twitter.testConnection();
-        
-        if (!connectionTest) {
-            console.log('❌ Connection failed. Please check your TWITTER_BEARER_TOKEN in .env file');
-            console.log('🔗 Get your Bearer Token from: https://developer.twitter.com/en/portal/dashboard');
-            return;
-        }
-        
-        console.log('\n2️⃣ Fetching Recent Reply Tweets...');
-        const replyTweets = await twitter.getReplyTweets(10); // Get 10 reply tweets
-        
-        if (replyTweets.length === 0) {
-            console.log('📝 No reply tweets found in recent tweets');
-            return;
-        }
-        
-        console.log(`\n📊 Found ${replyTweets.length} reply tweets:`);
-        
-        // Display first few reply tweets
-        for (let i = 0; i < Math.min(3, replyTweets.length); i++) {
-            const tweet = replyTweets[i];
-            console.log(`\n📝 Reply Tweet ${i + 1}:`);
-            console.log(`   🆔 ID: ${tweet.id}`);
-            console.log(`   📅 Date: ${tweet.created_at}`);
-            console.log(`   📄 Content: ${tweet.text}`);
-            
-            // Show who she's replying to
-            const originalTweetRef = tweet.referenced_tweets?.find(ref => ref.type === 'replied_to');
-            if (originalTweetRef) {
-                console.log(`   👤 Replying to tweet: ${originalTweetRef.id}`);
-            }
-        }
-        
-        console.log('\n3️⃣ Fetching Complete Reply Context...');
-        const replyContexts = await twitter.getReplyContext(3); // Get context for 3 replies
-        
-        console.log(`\n📊 Retrieved context for ${replyContexts.length} reply tweets:`);
-        
-        for (let i = 0; i < replyContexts.length; i++) {
-            const context = replyContexts[i];
-            console.log(`\n🔄 Reply Context ${i + 1}:`);
-            
-            // Original tweet
-            if (context.original_tweet) {
-                console.log(`   📝 Original Tweet:`);
-                console.log(`      👤 By: @${context.original_user?.username || 'unknown'}`);
-                console.log(`      📄 Content: ${context.original_tweet.text}`);
-                console.log(`      📅 Date: ${context.original_tweet.created_at}`);
-            } else {
-                console.log(`   ❌ Original tweet not accessible`);
-            }
-            
-            // Reply tweet
-            console.log(`   💬 JK Rowling's Reply:`);
-            console.log(`      📄 Content: ${context.reply_tweet.text}`);
-            console.log(`      📅 Date: ${context.reply_tweet.created_at}`);
-        }
-        
-        console.log('\n✅ Twitter API test completed successfully!');
-        console.log('\n💡 Next steps:');
-        console.log('   1. Add your TWITTER_BEARER_TOKEN to .env file');
-        console.log('   2. Run this script again to test with real data');
-        console.log('   3. Use the TwitterAPIClient in your analysis scripts');
-        
-    } catch (error) {
-        console.error('❌ Test failed:', error.message);
-        console.log('\n🔧 Troubleshooting:');
-        console.log('   1. Make sure you have a Twitter Developer account');
-        console.log('   2. Get your Bearer Token from the developer portal');
-        console.log('   3. Add TWITTER_BEARER_TOKEN to your .env file');
-        console.log('   4. Check your API access level and rate limits');
+    console.log('🧪 Testing Twitter API Connection');
+    console.log('================================\n');
+
+    const bearerToken = config.twitter.bearerToken;
+    const userId = '62513246'; // JK Rowling's Twitter user ID
+
+    if (!bearerToken) {
+        console.error('❌ No Twitter Bearer Token found in config');
+        console.log('Please set TWITTER_BEARER_TOKEN in your .env file');
+        return;
     }
+
+    console.log(`🔑 Bearer Token: ${bearerToken.substring(0, 20)}...`);
+    console.log(`👤 User ID: ${userId}`);
+
+    const client = axios.create({
+        baseURL: 'https://api.twitter.com/2',
+        headers: {
+            'Authorization': `Bearer ${bearerToken}`,
+            'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+    });
+
+    try {
+        // Test 1: Get user info
+        console.log('\n🔍 Test 1: Getting user info...');
+        const userResponse = await client.get(`/users/${userId}`);
+        
+        if (userResponse.data && userResponse.data.data) {
+            const user = userResponse.data.data;
+            console.log('✅ User info retrieved:');
+            console.log(`   👤 Name: ${user.name}`);
+            console.log(`   🐦 Username: ${user.username}`);
+            console.log(`   📅 Created: ${user.created_at}`);
+            console.log(`   📝 Description: ${user.description}`);
+        }
+
+        // Test 2: Get recent tweets
+        console.log('\n🔍 Test 2: Getting recent tweets...');
+        const tweetsResponse = await client.get(`/users/${userId}/tweets`, {
+            params: {
+                max_results: 10,
+                'tweet.fields': 'created_at,author_id,referenced_tweets,public_metrics',
+                'user.fields': 'name,username',
+                expansions: 'author_id,referenced_tweets.id'
+            }
+        });
+
+        if (tweetsResponse.data && tweetsResponse.data.data) {
+            const tweets = tweetsResponse.data.data;
+            console.log(`✅ Retrieved ${tweets.length} tweets:`);
+            
+            tweets.forEach((tweet, index) => {
+                console.log(`\n   Tweet ${index + 1}:`);
+                console.log(`   🆔 ID: ${tweet.id}`);
+                console.log(`   📅 Created: ${tweet.created_at}`);
+                console.log(`   📝 Text: ${tweet.text.substring(0, 100)}...`);
+                
+                if (tweet.referenced_tweets) {
+                    console.log(`   🔗 Referenced tweets: ${tweet.referenced_tweets.length}`);
+                    tweet.referenced_tweets.forEach(ref => {
+                        console.log(`      Type: ${ref.type}, ID: ${ref.id}`);
+                    });
+                }
+                
+                if (tweet.public_metrics) {
+                    console.log(`   📊 Metrics: ${JSON.stringify(tweet.public_metrics)}`);
+                }
+            });
+
+            // Check for reposts
+            const reposts = tweets.filter(tweet => 
+                tweet.referenced_tweets && 
+                tweet.referenced_tweets.some(ref => ref.type === 'retweeted')
+            );
+
+            console.log(`\n🔄 Found ${reposts.length} reposts out of ${tweets.length} tweets`);
+            
+            if (reposts.length > 0) {
+                reposts.forEach((repost, index) => {
+                    console.log(`\n   Repost ${index + 1}:`);
+                    console.log(`   🆔 ID: ${repost.id}`);
+                    console.log(`   📅 Created: ${repost.created_at}`);
+                    console.log(`   📝 Text: ${repost.text.substring(0, 100)}...`);
+                    
+                    const originalTweetRef = repost.referenced_tweets.find(ref => ref.type === 'retweeted');
+                    if (originalTweetRef) {
+                        console.log(`   🔗 Original Tweet ID: ${originalTweetRef.id}`);
+                    }
+                });
+            }
+        }
+
+    } catch (error) {
+        console.error('❌ Twitter API Error:', error.message);
+        if (error.response) {
+            console.error('Response status:', error.response.status);
+            console.error('Response data:', JSON.stringify(error.response.data, null, 2));
+        }
+    }
+
+    console.log('\n🎯 Test completed!');
 }
 
-// Run the test
-testTwitterAPI();
+testTwitterAPI().catch(console.error);
