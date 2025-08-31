@@ -1048,6 +1048,83 @@ function initializeDemoFeed() {
 // Initialize demo feed
 initializeDemoFeed();
 
+// Mobile-optimized AI analysis functionality
+function initializeMobileAIAnalysis() {
+    // Add collapsible functionality for mobile
+    document.addEventListener('click', (e) => {
+        const header = e.target.closest('.warning-header, .safe-header, .no-analysis-header');
+        if (header && window.innerWidth <= 768) {
+            const analysisSection = header.closest('.transphobia-warning, .safe-analysis, .no-analysis');
+            const details = analysisSection.querySelector('.warning-details, .safe-details, .no-analysis-details');
+            
+            if (details) {
+                const isCollapsed = details.style.display === 'none';
+                details.style.display = isCollapsed ? 'block' : 'none';
+                
+                // Add visual feedback
+                header.style.opacity = isCollapsed ? '1' : '0.8';
+                
+                // Add expand/collapse indicator
+                let indicator = header.querySelector('.expand-indicator');
+                if (!indicator) {
+                    indicator = document.createElement('span');
+                    indicator.className = 'expand-indicator';
+                    indicator.innerHTML = '▼';
+                    indicator.style.cssText = `
+                        margin-left: auto;
+                        font-size: 12px;
+                        transition: transform 0.2s ease;
+                    `;
+                    header.appendChild(indicator);
+                }
+                indicator.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+        }
+    });
+    
+    // Add touch-friendly improvements for mobile
+    if (window.innerWidth <= 768) {
+        // Make analysis sections more touch-friendly
+        const analysisSections = document.querySelectorAll('.ai-analysis');
+        analysisSections.forEach(section => {
+            section.style.cursor = 'pointer';
+            
+            // Add touch feedback
+            section.addEventListener('touchstart', () => {
+                section.style.transform = 'scale(0.98)';
+            });
+            
+            section.addEventListener('touchend', () => {
+                section.style.transform = 'scale(1)';
+            });
+        });
+        
+        // Optimize linked articles for mobile
+        const linkedArticles = document.querySelectorAll('.linked-articles a');
+        linkedArticles.forEach(link => {
+            link.style.cssText += `
+                display: block;
+                padding: 8px 0;
+                min-height: 44px;
+                line-height: 1.4;
+            `;
+        });
+    }
+}
+
+// Initialize mobile optimizations when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // ... existing initialization code ...
+    
+    // Initialize mobile AI analysis features
+    initializeMobileAIAnalysis();
+});
+
+// Re-initialize mobile features when window is resized
+window.addEventListener('resize', () => {
+    initializeMobileAIAnalysis();
+});
+
 // Configuration instructions
 console.log(`
 🚀 Enhanced JK Rowling Tweet Viewer Setup Instructions:
@@ -1059,6 +1136,8 @@ console.log(`
 5. ✅ Modal viewer for full-size media
 6. ✅ Enhanced filtering (All, Recent, Popular, Replies)
 7. ✅ Live demo feed for transphobic content detection
+8. ✅ Mobile-optimized AI analysis with collapsible sections
+9. ✅ Touch-friendly interactions for mobile devices
 
 Features included:
 - ✅ Real-time search
@@ -1073,4 +1152,7 @@ Features included:
 - ✅ Error handling
 - ✅ Twitter Widgets integration
 - ✅ Live demo feed with pledge tracking
+- ✅ Mobile-optimized AI analysis sections
+- ✅ Collapsible analysis content for better mobile UX
+- ✅ Touch-friendly interactions
 `);
