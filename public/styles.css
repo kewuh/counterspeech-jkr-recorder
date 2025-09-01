@@ -973,6 +973,63 @@ body {
     font-size: 12px;
 }
 
+/* Media Analysis Sections */
+.media-overall {
+    margin-bottom: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.media-individual {
+    margin-bottom: 12px;
+}
+
+.media-individual ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.media-individual li {
+    margin-bottom: 6px;
+    font-size: 11px;
+}
+
+.media-concerns {
+    margin-bottom: 12px;
+}
+
+.media-concerns ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.media-concerns li {
+    margin-bottom: 4px;
+    font-size: 11px;
+}
+
+.media-recommendations {
+    margin-bottom: 12px;
+}
+
+.media-recommendations ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.media-recommendations li {
+    margin-bottom: 4px;
+    font-size: 11px;
+}
+
+.media-harmful {
+    margin-top: 8px;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    font-weight: 600;
+}
+
 .warning-details .article-analysis {
     margin: 12px 0;
     padding: 10px;

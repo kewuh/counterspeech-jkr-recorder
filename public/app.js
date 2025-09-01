@@ -409,7 +409,7 @@ function createTweetElement(tweet) {
 
                         ${analysis.media_analysis && analysis.media_analysis !== 'Not analyzed' ? `
                             <div class="media-analysis">
-                                <strong>Media Analysis:</strong> ${analysis.media_analysis}
+                                <strong>Media Analysis:</strong> ${formatMediaAnalysis(analysis.media_analysis)}
                             </div>
                         ` : ''}
                         ${analysis.article_analysis && analysis.article_analysis !== 'No articles to analyze' ? `
@@ -465,7 +465,7 @@ function createTweetElement(tweet) {
                         <div class="explanation">${analysis.explanation}</div>
                         ${analysis.media_analysis && analysis.media_analysis !== 'Not analyzed' ? `
                             <div class="media-analysis">
-                                <strong>Media Analysis:</strong> ${analysis.media_analysis}
+                                <strong>Media Analysis:</strong> ${formatMediaAnalysis(analysis.media_analysis)}
                             </div>
                         ` : ''}
                         ${analysis.article_analysis && analysis.article_analysis !== 'No articles to analyze' ? `
@@ -986,6 +986,59 @@ function formatNumber(num) {
         return (num / 1000).toFixed(1) + 'K';
     }
     return num.toString();
+}
+
+function formatMediaAnalysis(mediaAnalysis) {
+    try {
+        // Try to parse as JSON
+        const analysis = JSON.parse(mediaAnalysis);
+        
+        let formatted = '';
+        
+        // Add overall assessment
+        if (analysis.overall_assessment) {
+            formatted += `<div class="media-overall"><strong>Overall Assessment:</strong> ${analysis.overall_assessment}</div>`;
+        }
+        
+        // Add individual image analyses
+        if (analysis.individual_analyses && analysis.individual_analyses.length > 0) {
+            formatted += '<div class="media-individual"><strong>Individual Image Analyses:</strong><ul>';
+            analysis.individual_analyses.forEach((imgAnalysis, index) => {
+                formatted += `<li><strong>Image ${index + 1}:</strong> ${imgAnalysis.analysis || imgAnalysis}</li>`;
+            });
+            formatted += '</ul></div>';
+        }
+        
+        // Add concerns
+        if (analysis.concerns && analysis.concerns.length > 0) {
+            formatted += '<div class="media-concerns"><strong>Visual Concerns:</strong><ul>';
+            analysis.concerns.forEach(concern => {
+                formatted += `<li>${concern}</li>`;
+            });
+            formatted += '</ul></div>';
+        }
+        
+        // Add recommendations
+        if (analysis.recommendations && analysis.recommendations.length > 0) {
+            formatted += '<div class="media-recommendations"><strong>Recommendations:</strong><ul>';
+            analysis.recommendations.forEach(rec => {
+                formatted += `<li>${rec}</li>`;
+            });
+            formatted += '</ul></div>';
+        }
+        
+        // Add harmful content detection
+        if (analysis.harmful_content_detected !== undefined) {
+            const status = analysis.harmful_content_detected ? '⚠️ Detected' : '✅ Not Detected';
+            formatted += `<div class="media-harmful"><strong>Harmful Content:</strong> ${status}</div>`;
+        }
+        
+        return formatted;
+        
+    } catch (error) {
+        // If it's not JSON, return as plain text
+        return mediaAnalysis;
+    }
 }
 
 function debounce(func, wait) {
