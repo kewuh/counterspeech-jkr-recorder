@@ -27,10 +27,11 @@ class NewReplyDetector {
         const startTime = new Date();
         
         try {
-            // Get the latest post timestamp from our database
+            // Get the latest post timestamp from our database (excluding sync tracking)
             const { data: latestPost, error: latestError } = await this.supabase.supabase
                 .from('jk_rowling_posts')
                 .select('published_at')
+                .neq('post_type', 'sync_tracking')
                 .order('published_at', { ascending: false })
                 .limit(1);
                 
@@ -46,8 +47,8 @@ class NewReplyDetector {
             console.log('\n🔄 Checking for new reposts from X API...');
             await this.checkForNewReposts(lastProcessedTime);
             
-            // Check for new replies from Junkipedia (existing functionality)
-            console.log('\n💬 Checking for new replies from Junkipedia...');
+            // Check for new tweets from Junkipedia (existing functionality)
+            console.log('\n💬 Checking for new tweets from Junkipedia...');
             await this.checkForNewReplies(lastProcessedTime);
             
             // Update sync tracking record
@@ -432,7 +433,7 @@ Provide your analysis in the following JSON format:
      * Check for new reply tweets and fetch their context (existing functionality)
      */
     async checkForNewReplies(lastProcessedTime) {
-        console.log('🔍 Checking for new reply tweets...\n');
+        console.log('🔍 Checking for new tweets from Junkipedia...\n');
         
         try {
             // Fetch new posts from Junkipedia (this doesn't use Twitter API)
@@ -449,74 +450,125 @@ Provide your analysis in the following JSON format:
             
             console.log(`📊 Found ${newPosts.data.length} posts from Junkipedia`);
             
-            // Filter for reply tweets that are newer than our last processed post
-            const newReplyTweets = newPosts.data.filter(post => {
-                const isReply = post.attributes?.post_data?.in_reply_to_status_id_str;
+            // Filter for ALL tweets that are newer than our last processed post
+            const newTweets = newPosts.data.filter(post => {
                 const isNewer = !lastProcessedTime || new Date(post.attributes?.published_at) > new Date(lastProcessedTime);
-                return isReply && isNewer;
+                return isNewer;
             });
             
-            if (newReplyTweets.length === 0) {
-                console.log('📝 No new reply tweets found');
+            if (newTweets.length === 0) {
+                console.log('📝 No new tweets found');
                 return;
             }
             
-            console.log(`🎯 Found ${newReplyTweets.length} new reply tweets to process`);
+            console.log(`🎯 Found ${newTweets.length} new tweets to process`);
             
-            // Process each new reply tweet (this will use Twitter API)
+            // Process each new tweet
             let processedCount = 0;
             let successCount = 0;
             let errorCount = 0;
             
-            for (const post of newReplyTweets) {
+            for (const post of newTweets) {
                 try {
-                    const originalTweetId = post.attributes?.post_data?.in_reply_to_status_id_str;
+                    const isReply = post.attributes?.post_data?.in_reply_to_status_id_str;
+                    const tweetText = post.attributes?.search_data_fields?.sanitized_text || 
+                                    post.attributes?.post_data?.full_text || 
+                                    'No text available';
                     
-                    console.log(`\n📝 Processing new reply tweet:`);
-                    console.log(`   💬 Reply: ${post.attributes?.search_data_fields?.sanitized_text?.substring(0, 100)}...`);
-                    console.log(`   🔗 Original tweet ID: ${originalTweetId}`);
+                    console.log(`\n📝 Processing new tweet:`);
+                    console.log(`   💬 Text: ${tweetText.substring(0, 100)}...`);
+                    console.log(`   📅 Published: ${post.attributes?.published_at}`);
+                    console.log(`   🔗 Type: ${isReply ? 'Reply' : 'Standalone tweet'}`);
                     
-                    // Check if we already have this reply context
-                    const existingContext = await this.supabase.supabase
-                        .from('reply_contexts')
+                    // Check if we already have this tweet
+                    const existingTweet = await this.supabase.supabase
+                        .from('jk_rowling_posts')
                         .select('id')
-                        .eq('reply_tweet_id', post.id)
+                        .eq('junkipedia_id', post.id)
                         .single();
                         
-                    if (existingContext.data) {
-                        console.log(`   ✅ Reply context already exists, skipping`);
+                    if (existingTweet.data) {
+                        console.log(`   ✅ Tweet already exists in database, skipping`);
                         continue;
                     }
                     
-                    // Fetch original tweet from Twitter API (single API call)
-                    console.log(`   🔍 Fetching original tweet from Twitter API...`);
-                    const originalTweet = await this.twitter.getOriginalTweet(originalTweetId);
+                    // Store the tweet in jk_rowling_posts table
+                    const tweetData = {
+                        junkipedia_id: post.id,
+                        content: tweetText,
+                        published_at: post.attributes?.published_at,
+                        url: post.attributes?.url,
+                        post_type: isReply ? 'reply' : 'tweet',
+                        engagement_metrics: {
+                            likes: post.attributes?.engagement_data?.like_count || 0,
+                            retweets: post.attributes?.engagement_data?.retweet_count || 0,
+                            replies: post.attributes?.engagement_data?.reply_count || 0,
+                            views: post.attributes?.engagement_data?.view_count || 0
+                        },
+                        raw_data: post
+                    };
                     
-                    if (originalTweet && originalTweet.data) {
-                        // Store the reply context
-                        await this.storeReplyContext(post, originalTweet);
-                        successCount++;
-                        console.log(`   ✅ Successfully processed and stored`);
-                    } else {
-                        console.log(`   ❌ Original tweet not accessible`);
+                    const { data: storedTweet, error: storeError } = await this.supabase.supabase
+                        .from('jk_rowling_posts')
+                        .insert([tweetData])
+                        .select()
+                        .single();
+                    
+                    if (storeError) {
+                        console.log(`   ❌ Error storing tweet: ${storeError.message}`);
                         errorCount++;
+                        continue;
                     }
+                    
+                    console.log(`   ✅ Tweet stored with ID: ${storedTweet.id}`);
+                    
+                    // Run AI analysis on the tweet
+                    console.log(`   🤖 Running AI analysis...`);
+                    try {
+                        const analysis = await this.analyzer.analyzeTweet(storedTweet);
+                        if (analysis) {
+                            console.log(`   ✅ AI analysis completed`);
+                        } else {
+                            console.log(`   ⚠️ AI analysis failed`);
+                        }
+                    } catch (analysisError) {
+                        console.log(`   ❌ Error in AI analysis: ${analysisError.message}`);
+                    }
+                    
+                    // If it's a reply, also store reply context
+                    if (isReply) {
+                        const originalTweetId = post.attributes?.post_data?.in_reply_to_status_id_str;
+                        console.log(`   🔍 Fetching original tweet context...`);
+                        
+                        try {
+                            const originalTweet = await this.twitter.getOriginalTweet(originalTweetId);
+                            if (originalTweet && originalTweet.data) {
+                                await this.storeReplyContext(post, originalTweet);
+                                console.log(`   ✅ Reply context stored`);
+                            }
+                        } catch (contextError) {
+                            console.log(`   ⚠️ Could not store reply context: ${contextError.message}`);
+                        }
+                    }
+                    
+                    successCount++;
+                    console.log(`   ✅ Successfully processed and stored`);
                     
                     processedCount++;
                     
                 } catch (error) {
-                    console.error(`   ❌ Error processing reply tweet:`, error.message);
+                    console.error(`   ❌ Error processing tweet:`, error.message);
                     errorCount++;
                 }
             }
             
-            console.log(`\n📊 Reply processing summary:`);
+            console.log(`\n📊 Tweet processing summary:`);
             console.log(`   ✅ Successfully processed: ${successCount}`);
             console.log(`   ❌ Errors: ${errorCount}`);
             console.log(`   📝 Total processed: ${processedCount}`);
             
         } catch (error) {
-            console.error('❌ Error checking for new replies:', error.message);
+            console.error('❌ Error checking for new tweets:', error.message);
         }
     }
 
