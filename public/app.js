@@ -409,7 +409,7 @@ function createTweetElement(tweet) {
 
                         ${analysis.media_analysis && analysis.media_analysis !== 'Not analyzed' ? `
                             <div class="media-analysis">
-                                <strong>Media Analysis:</strong> ${formatMediaAnalysis(analysis.media_analysis)}
+                                <strong>Media Analysis:</strong> ${analysis.media_analysis}
                             </div>
                         ` : ''}
                         ${analysis.article_analysis && analysis.article_analysis !== 'No articles to analyze' ? `
@@ -465,7 +465,7 @@ function createTweetElement(tweet) {
                         <div class="explanation">${analysis.explanation}</div>
                         ${analysis.media_analysis && analysis.media_analysis !== 'Not analyzed' ? `
                             <div class="media-analysis">
-                                <strong>Media Analysis:</strong> ${formatMediaAnalysis(analysis.media_analysis)}
+                                <strong>Media Analysis:</strong> ${analysis.media_analysis}
                             </div>
                         ` : ''}
                         ${analysis.article_analysis && analysis.article_analysis !== 'No articles to analyze' ? `
