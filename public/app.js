@@ -544,9 +544,15 @@ function createTweetElement(tweet) {
         targetTweetId = replyToStatusId;
         targetUsername = replyToScreenName;
         
-        replyToUser.textContent = `Replying to @${replyToScreenName}`;
-        replyToUser.href = `https://twitter.com/${replyToScreenName}/status/${replyToStatusId}`;
-        replyContext.style.display = 'block';
+        // Only show reply context if the tweet content doesn't already start with the username
+        if (!tweet.content.startsWith(`@${replyToScreenName}`)) {
+            replyToUser.textContent = `Replying to @${replyToScreenName}`;
+            replyToUser.href = `https://twitter.com/${replyToScreenName}/status/${replyToStatusId}`;
+            replyContext.style.display = 'block';
+        } else {
+            // Hide reply context since the tweet content already shows the reply
+            replyContext.style.display = 'none';
+        }
     }
     // Check for quotes
     else if (searchData?.quoted_id) {
