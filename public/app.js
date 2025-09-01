@@ -567,6 +567,11 @@ function createTweetElement(tweet) {
         replyContext.style.display = 'block';
     }
     
+    // Don't show reply context for RT format tweets (they're handled by the repost indicator)
+    if (tweet.content.startsWith('RT @')) {
+        replyContext.style.display = 'none';
+    }
+    
     // Embed functionality removed
     
     return template;
