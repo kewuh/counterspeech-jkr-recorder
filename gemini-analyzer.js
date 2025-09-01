@@ -48,11 +48,20 @@ class GeminiAnalyzer {
             const tweetUrl = tweet.url;
             const publishedAt = tweet.published_at;
             
+            // Check for images in the tweet
+            const images = this.extractImagesFromTweet(tweet);
+            const hasImages = images.length > 0;
+            
+            if (hasImages) {
+                console.log(`📸 Found ${images.length} images to analyze`);
+            }
+            
             // Create context about the tweet
-            const context = `
+            let context = `
 Tweet Content: "${tweetContent}"
 Tweet URL: ${tweetUrl}
 Published: ${publishedAt}
+${hasImages ? `Images: ${images.length} attached` : 'Images: None'}
 
 Please analyze this tweet for potentially transphobic content. Consider:
 1. Language that denies trans people's identities
@@ -61,6 +70,7 @@ Please analyze this tweet for potentially transphobic content. Consider:
 4. Content that could contribute to discrimination or violence
 5. Rhetoric that questions trans rights or access to healthcare
 6. Language that frames trans people as threats or dangerous
+${hasImages ? '7. Visual content that could be harmful or discriminatory' : ''}
 
 Provide your analysis in the following JSON format:
 {
@@ -69,13 +79,26 @@ Provide your analysis in the following JSON format:
   "concerns": ["list of specific concerns"],
   "explanation": "detailed explanation of why this tweet is concerning or not",
   "severity": "high/medium/low",
-  "recommendations": ["suggestions for addressing concerns"]
+  "recommendations": ["suggestions for addressing concerns"],
+  "media_analysis": "analysis of any images or media content (if applicable)"
 }
 `;
+
+            // If there are images, analyze them
+            let mediaAnalysis = "Not analyzed";
+            if (hasImages) {
+                console.log(`🤖 Analyzing ${images.length} images...`);
+                mediaAnalysis = await this.analyzeImages(images, tweetContent);
+                context += `\n\nImage Analysis: ${mediaAnalysis}`;
+            }
 
             const analysis = await this.analyzeContent(context);
             
             if (analysis) {
+                // Add media analysis to the result
+                analysis.media_analysis = mediaAnalysis;
+                analysis.images_analyzed = images.length;
+                
                 // Store the analysis in the database
                 await this.storeAnalysis(tweet.junkipedia_id, analysis);
                 
@@ -83,6 +106,9 @@ Provide your analysis in the following JSON format:
                 console.log(`   🚨 Potentially transphobic: ${analysis.is_potentially_transphobic}`);
                 console.log(`   📊 Confidence: ${analysis.confidence_level}`);
                 console.log(`   ⚠️  Severity: ${analysis.severity}`);
+                if (hasImages) {
+                    console.log(`   📸 Images analyzed: ${images.length}`);
+                }
             }
             
             return analysis;
@@ -132,6 +158,107 @@ Provide your analysis in the following JSON format:
         }
     }
 
+    /**
+     * Extract images from tweet data
+     */
+    extractImagesFromTweet(tweet) {
+        const images = [];
+        
+        try {
+            // Check for images in post_data
+            if (tweet.raw_data?.attributes?.post_data?.extended_entities?.media) {
+                const media = tweet.raw_data.attributes.post_data.extended_entities.media;
+                media.forEach(item => {
+                    if (item.type === 'photo' && item.media_url_https) {
+                        images.push({
+                            url: item.media_url_https,
+                            type: 'photo'
+                        });
+                    }
+                });
+            }
+            
+            // Check for images in search_data_fields
+            if (tweet.raw_data?.attributes?.search_data_fields?.media_data) {
+                const mediaData = tweet.raw_data.attributes.search_data_fields.media_data;
+                mediaData.forEach(item => {
+                    if (item.type === 'photo' && item.media_url) {
+                        images.push({
+                            url: item.media_url,
+                            type: 'photo'
+                        });
+                    }
+                });
+            }
+            
+            console.log(`📸 Extracted ${images.length} images from tweet ${tweet.junkipedia_id}`);
+            return images;
+            
+        } catch (error) {
+            console.error('❌ Error extracting images:', error.message);
+            return [];
+        }
+    }
+
+    /**
+     * Analyze images using Gemini Vision
+     */
+    async analyzeImages(images, tweetContent) {
+        try {
+            if (images.length === 0) {
+                return "No images to analyze";
+            }
+
+            console.log(`🤖 Analyzing ${images.length} images with Gemini Vision...`);
+            
+            const imagePrompts = images.map((image, index) => `
+Image ${index + 1}: ${image.url}
+
+Please analyze this image for potentially transphobic or harmful content. Consider:
+1. Visual content that denies trans people's identities
+2. Harmful stereotypes or discriminatory imagery
+3. Content that could contribute to discrimination or violence
+4. Visual rhetoric that questions trans rights
+5. Imagery that frames trans people as threats
+
+Provide a brief analysis of this specific image.
+`).join('\n\n');
+
+            const prompt = `
+Tweet Content: "${tweetContent}"
+
+${imagePrompts}
+
+Please provide a comprehensive analysis of all images in relation to the tweet content. Consider whether the visual content:
+- Reinforces or contradicts the text content
+- Contains potentially harmful imagery
+- Could contribute to discrimination or violence
+- Uses visual rhetoric that questions trans rights
+
+Provide your analysis in the following JSON format:
+{
+  "overall_assessment": "brief overall assessment of all images",
+  "individual_analyses": ["analysis of each image"],
+  "harmful_content_detected": true/false,
+  "concerns": ["list of specific visual concerns"],
+  "recommendations": ["suggestions for addressing visual concerns"]
+}
+`;
+
+            const analysis = await this.analyzeContent(prompt);
+            
+            if (analysis) {
+                return JSON.stringify(analysis);
+            } else {
+                return "Image analysis failed";
+            }
+            
+        } catch (error) {
+            console.error('❌ Error analyzing images:', error.message);
+            return "Image analysis error: " + error.message;
+        }
+    }
+
     async storeAnalysis(tweetId, analysis) {
         try {
             const analysisData = {
@@ -142,6 +269,8 @@ Provide your analysis in the following JSON format:
                 explanation: analysis.explanation,
                 severity: analysis.severity,
                 recommendations: analysis.recommendations,
+                media_analysis: analysis.media_analysis || null,
+                images_analyzed: analysis.images_analyzed || 0,
                 analyzed_at: new Date().toISOString(),
                 raw_analysis: analysis
             };
