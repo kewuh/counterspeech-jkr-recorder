@@ -326,7 +326,7 @@ Provide a detailed analysis of what you see in this image and whether it contain
                 concerns: concerns,
                 explanation: `Analyzed ${images.length} images from the tweet. ${hasHarmfulContent ? 'Potentially harmful content detected in visual elements.' : 'No obvious transphobic or harmful content detected in the visual elements.'} ${imageAnalyses.map(img => `Image ${img.image_number}: ${img.analysis}`).join(' ')}`,
                 severity: hasHarmfulContent ? "medium" : "low",
-                media_analysis: `Image Analysis: ${imageAnalyses.map(img => `Image ${img.image_number}: ${img.analysis}`).join('; ')}`
+                media_analysis: imageAnalyses.map(img => `Image ${img.image_number}: ${img.analysis}`).join('; ')
             };
             
             return JSON.stringify(synthesizedAnalysis);
