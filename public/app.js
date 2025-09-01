@@ -329,17 +329,33 @@ function displayTweets() {
 function createTweetElement(tweet) {
     const template = tweetTemplate.content.cloneNode(true);
     
-    // Handle repost indicator
+    // Handle repost/retweet indicator
     const repostIndicator = template.querySelector('.repost-indicator');
-    if (tweet.post_type === 'repost' && tweet.raw_data?.original_tweet) {
+    
+    // Check if this is a repost or retweet
+    const isRepost = tweet.post_type === 'repost' && tweet.raw_data?.original_tweet;
+    const isRetweet = tweet.content.startsWith('RT @') || tweet.content.startsWith('Retweet @');
+    
+    if (isRepost || isRetweet) {
         repostIndicator.style.display = 'block';
         
-        const originalTweet = tweet.raw_data.original_tweet;
-        const originalAuthor = originalTweet.author_username || originalTweet.author_id || 'unknown';
-        const originalTime = originalTweet.created_at ? formatRelativeTime(new Date(originalTweet.created_at)) : '';
-        
-        repostIndicator.querySelector('.repost-author').textContent = `@${originalAuthor}`;
-        repostIndicator.querySelector('.repost-time').textContent = originalTime;
+        if (isRepost && tweet.raw_data?.original_tweet) {
+            // Handle repost with original tweet data
+            const originalTweet = tweet.raw_data.original_tweet;
+            const originalAuthor = originalTweet.author_username || originalTweet.author_id || 'unknown';
+            const originalTime = originalTweet.created_at ? formatRelativeTime(new Date(originalTweet.created_at)) : '';
+            
+            repostIndicator.querySelector('.repost-author').textContent = `@${originalAuthor}`;
+            repostIndicator.querySelector('.repost-time').textContent = originalTime;
+        } else if (isRetweet) {
+            // Handle retweet by parsing the RT @username format
+            const rtMatch = tweet.content.match(/^RT @(\w+)/);
+            if (rtMatch) {
+                const username = rtMatch[1];
+                repostIndicator.querySelector('.repost-author').textContent = `@${username}`;
+                repostIndicator.querySelector('.repost-time').textContent = ''; // No original time for RT format
+            }
+        }
     }
     
     // Set tweet content
