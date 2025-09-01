@@ -84,20 +84,47 @@ Provide your analysis in the following JSON format:
 }
 `;
 
-            // If there are images, analyze them
-            let mediaAnalysis = "Not analyzed";
+            // If there are images, analyze them first
+            let imageAnalysis = null;
             if (hasImages) {
                 console.log(`🤖 Analyzing ${images.length} images...`);
-                mediaAnalysis = await this.analyzeImages(images, tweetContent);
-                context += `\n\nImage Analysis: ${mediaAnalysis}`;
+                imageAnalysis = await this.analyzeImages(images, tweetContent);
             }
 
             const analysis = await this.analyzeContent(context);
             
             if (analysis) {
-                // Add media analysis to the result
-                analysis.media_analysis = mediaAnalysis;
-                analysis.images_analyzed = images.length;
+                // Integrate image analysis into the main analysis
+                if (imageAnalysis) {
+                    try {
+                        const imageResults = JSON.parse(imageAnalysis);
+                        
+                        // Combine concerns from both text and image analysis
+                        const allConcerns = [
+                            ...(analysis.concerns || []),
+                            ...(imageResults.concerns || [])
+                        ];
+                        
+                        // Update the main analysis with image findings
+                        analysis.concerns = allConcerns;
+                        analysis.is_potentially_transphobic = analysis.is_potentially_transphobic || imageResults.is_potentially_transphobic;
+                        analysis.severity = this.getHigherSeverity(analysis.severity, imageResults.severity);
+                        analysis.media_analysis = imageResults.media_analysis;
+                        analysis.images_analyzed = images.length;
+                        
+                        // Update explanation to include image analysis
+                        if (imageResults.explanation) {
+                            analysis.explanation += ` ${imageResults.explanation}`;
+                        }
+                    } catch (error) {
+                        console.error('❌ Error integrating image analysis:', error.message);
+                        analysis.media_analysis = imageAnalysis;
+                        analysis.images_analyzed = images.length;
+                    }
+                } else {
+                    analysis.media_analysis = "Not analyzed";
+                    analysis.images_analyzed = 0;
+                }
                 
                 // Store the analysis in the database
                 await this.storeAnalysis(tweet.junkipedia_id, analysis);
@@ -253,60 +280,71 @@ Provide a detailed analysis of what you see in this image and whether it contain
                 }
             }
 
-            // Create overall assessment
-            const overallAssessment = `Analyzed ${images.length} images from the tweet. Each image has been individually assessed for potentially harmful content.`;
+            // Synthesize the image analysis into a single comprehensive analysis
+            const hasHarmfulContent = imageAnalyses.some(img => {
+                const analysis = img.analysis.toLowerCase();
+                // Check for negative phrases first
+                const hasNegativePhrase = analysis.includes('no obvious harmful') || 
+                                         analysis.includes('no obvious transphobic') ||
+                                         analysis.includes('no harmful') ||
+                                         analysis.includes('no transphobic') ||
+                                         analysis.includes('no problematic');
+                
+                // Only check for positive phrases if no negative phrases found
+                return !hasNegativePhrase && (
+                    analysis.includes('harmful') || 
+                    analysis.includes('transphobic') ||
+                    analysis.includes('problematic')
+                );
+            });
 
-            const analysis = {
-                overall_assessment: overallAssessment,
-                individual_analyses: imageAnalyses,
-                harmful_content_detected: imageAnalyses.some(img => {
+            const concerns = imageAnalyses
+                .filter(img => {
                     const analysis = img.analysis.toLowerCase();
                     // Check for negative phrases first
                     const hasNegativePhrase = analysis.includes('no obvious harmful') || 
                                              analysis.includes('no obvious transphobic') ||
                                              analysis.includes('no harmful') ||
                                              analysis.includes('no transphobic') ||
-                                             analysis.includes('no problematic');
+                                             analysis.includes('no problematic') ||
+                                             analysis.includes('no concern');
                     
-                    // Only check for positive phrases if no negative phrases found
+                    // Only include if no negative phrases found and has positive indicators
                     return !hasNegativePhrase && (
-                        analysis.includes('harmful') || 
-                        analysis.includes('transphobic') ||
-                        analysis.includes('problematic')
+                        analysis.includes('concern') || 
+                        analysis.includes('problematic') ||
+                        analysis.includes('harmful') ||
+                        analysis.includes('transphobic')
                     );
-                }),
-                concerns: imageAnalyses
-                    .filter(img => {
-                        const analysis = img.analysis.toLowerCase();
-                        // Check for negative phrases first
-                        const hasNegativePhrase = analysis.includes('no obvious harmful') || 
-                                                 analysis.includes('no obvious transphobic') ||
-                                                 analysis.includes('no harmful') ||
-                                                 analysis.includes('no transphobic') ||
-                                                 analysis.includes('no problematic') ||
-                                                 analysis.includes('no concern');
-                        
-                        // Only include if no negative phrases found and has positive indicators
-                        return !hasNegativePhrase && (
-                            analysis.includes('concern') || 
-                            analysis.includes('problematic') ||
-                            analysis.includes('harmful') ||
-                            analysis.includes('transphobic')
-                        );
-                    })
-                    .map(img => `Image ${img.image_number}: ${img.analysis.substring(0, 100)}...`),
-                recommendations: [
-                    "Review individual image analyses for specific concerns",
-                    "Consider the context of the tweet when interpreting image content"
-                ]
+                })
+                .map(img => `Image ${img.image_number}: ${img.analysis}`);
+
+            // Create a synthesized analysis that matches the main tweet analysis format
+            const synthesizedAnalysis = {
+                is_potentially_transphobic: hasHarmfulContent,
+                confidence_level: "high",
+                concerns: concerns,
+                explanation: `Analyzed ${images.length} images from the tweet. ${hasHarmfulContent ? 'Potentially harmful content detected in visual elements.' : 'No obvious transphobic or harmful content detected in the visual elements.'} ${imageAnalyses.map(img => `Image ${img.image_number}: ${img.analysis}`).join(' ')}`,
+                severity: hasHarmfulContent ? "medium" : "low",
+                media_analysis: `Image Analysis: ${imageAnalyses.map(img => `Image ${img.image_number}: ${img.analysis}`).join('; ')}`
             };
             
-            return JSON.stringify(analysis);
+            return JSON.stringify(synthesizedAnalysis);
             
         } catch (error) {
             console.error('❌ Error analyzing images:', error.message);
             return "Image analysis error: " + error.message;
         }
+    }
+
+    /**
+     * Get the higher severity level between two severities
+     */
+    getHigherSeverity(severity1, severity2) {
+        const severityLevels = { 'low': 1, 'medium': 2, 'high': 3 };
+        const level1 = severityLevels[severity1] || 1;
+        const level2 = severityLevels[severity2] || 1;
+        return level1 >= level2 ? severity1 : severity2;
     }
 
     /**
