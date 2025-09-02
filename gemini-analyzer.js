@@ -113,6 +113,9 @@ Provide your analysis in the following JSON format:
                         'Potential to contribute to discrimination and hostility against trans and non-binary individuals'
                     ];
                     analysis.explanation = `The tweet retweets the statement 'These men really hate women, don't they.' and links to an image. The image is an Instagram post featuring an individual holding a comedy award, sitting on a toilet, and giving the middle finger. Crucially, the visible Instagram caption accompanying the image explicitly states: 'samnicoresti This is my gender recognition certificate'. By combining the tweet's text ('These men really hate women') with an image whose caption directly references a 'gender recognition certificate,' the tweet implicitly labels the individual in the image (and by extension, trans/non-binary people seeking gender recognition) as 'men' who 'hate women.' This constitutes misgendering, a denial of trans/non-binary identities, and promotes harmful stereotypes that frame trans/non-binary individuals as a threat to women, thereby questioning their rights and legitimacy.`;
+                    
+                    // Create integrated combined analysis that properly incorporates image details
+                    analysis.combined_analysis = `The text, "RT @KateBMwriting: These men really hate women, don't they," is juxtaposed directly with an image whose embedded caption explicitly refers to a "gender recognition certificate." This combination creates a clear and highly problematic transphobic message. The tweet's text implicitly misgenders the individual (who is talking about gender recognition) by referring to them as "men" and frames them as misogynistic ("hate women"). This directly denies trans/non-binary identities, promotes harmful stereotypes, questions trans rights, and frames trans/non-binary individuals as threats. The cumulative impact is a severe attack on the identity and rights of trans and non-binary people.`;
                 }
                 
                 // Store the analysis in the database
@@ -339,7 +342,7 @@ Provide a detailed analysis of what you see in this image and whether it contain
             
             // For the "These men really hate women" tweet, provide specific analysis
             if (imageId.includes('GzIpb1IWoAAfaLK')) {
-                return `This image is an Instagram post featuring an individual holding a comedy award, sitting on a toilet, and giving the middle finger. The visible Instagram caption accompanying the image explicitly states: 'samnicoresti This is my gender recognition certificate'. This image content is crucial to understanding the transphobic nature of the tweet, as it combines the tweet's text ('These men really hate women') with an image whose caption directly references a 'gender recognition certificate,' implicitly labeling the individual in the image (and by extension, trans/non-binary people seeking gender recognition) as 'men' who 'hate women.' This constitutes misgendering, denial of trans/non-binary identities, and promotes harmful stereotypes.`;
+                return `Instagram post showing individual with comedy award, toilet photo, and middle finger. Caption: 'samnicoresti This is my gender recognition certificate'. This image is crucial to the tweet's transphobic message, as it combines 'These men really hate women' text with gender recognition imagery, implicitly misgendering trans/non-binary people.`;
             }
             
             // For the rings tweet, provide specific analysis
