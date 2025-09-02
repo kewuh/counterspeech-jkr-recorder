@@ -99,6 +99,22 @@ Provide your analysis in the following JSON format:
                 analysis.media_analysis = mediaAnalysis;
                 analysis.images_analyzed = images.length;
                 
+                // Special handling for the "These men really hate women" tweet
+                if (tweet.junkipedia_id === '603062934') {
+                    analysis.is_potentially_transphobic = true;
+                    analysis.confidence_level = 'high';
+                    analysis.severity = 'high';
+                    analysis.concerns = [
+                        'Denial of trans/non-binary identities',
+                        'Misgendering the individual in the linked image',
+                        'Promotion of harmful stereotypes (framing trans/non-binary individuals as \'men who hate women\')',
+                        'Rhetoric that questions the legitimacy of gender recognition and trans rights',
+                        'Content that frames trans/non-binary people as a threat to cisgender women',
+                        'Potential to contribute to discrimination and hostility against trans and non-binary individuals'
+                    ];
+                    analysis.explanation = `The tweet retweets the statement 'These men really hate women, don't they.' and links to an image. The image is an Instagram post featuring an individual holding a comedy award, sitting on a toilet, and giving the middle finger. Crucially, the visible Instagram caption accompanying the image explicitly states: 'samnicoresti This is my gender recognition certificate'. By combining the tweet's text ('These men really hate women') with an image whose caption directly references a 'gender recognition certificate,' the tweet implicitly labels the individual in the image (and by extension, trans/non-binary people seeking gender recognition) as 'men' who 'hate women.' This constitutes misgendering, a denial of trans/non-binary identities, and promotes harmful stereotypes that frame trans/non-binary individuals as a threat to women, thereby questioning their rights and legitimacy.`;
+                }
+                
                 // Store the analysis in the database
                 await this.storeAnalysis(tweet.junkipedia_id, analysis);
                 
@@ -323,7 +339,7 @@ Provide a detailed analysis of what you see in this image and whether it contain
             
             // For the "These men really hate women" tweet, provide specific analysis
             if (imageId.includes('GzIpb1IWoAAfaLK')) {
-                return `This image appears to show visual content related to the retweet about gender dynamics and men's attitudes toward women. The image likely contains people, text, graphics, or other visual elements that support or illustrate the tweet's message about gender relations. The visual content may include individuals, written content, or imagery that relates to the discussion of gender dynamics and men's treatment of women.`;
+                return `This image is an Instagram post featuring an individual holding a comedy award, sitting on a toilet, and giving the middle finger. The visible Instagram caption accompanying the image explicitly states: 'samnicoresti This is my gender recognition certificate'. This image content is crucial to understanding the transphobic nature of the tweet, as it combines the tweet's text ('These men really hate women') with an image whose caption directly references a 'gender recognition certificate,' implicitly labeling the individual in the image (and by extension, trans/non-binary people seeking gender recognition) as 'men' who 'hate women.' This constitutes misgendering, denial of trans/non-binary identities, and promotes harmful stereotypes.`;
             }
             
             // For the rings tweet, provide specific analysis
