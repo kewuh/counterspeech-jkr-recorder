@@ -578,6 +578,33 @@ function createTweetElement(tweet) {
         replyContext.style.display = 'none';
     }
     
+    // Display context analysis if available (for quoted/replied tweets)
+    if (interactionType && targetTweetId) {
+        const contextAnalysis = template.querySelector('.context-analysis');
+        const contextAnalysisContent = template.querySelector('.context-analysis-content');
+        
+        // Try to find analysis for the quoted/replied-to tweet
+        const contextTweetId = targetTweetId;
+        const contextAnalysisKey = `quoted_${contextTweetId}`;
+        
+        // Check if we have analysis for this context tweet
+        if (tweet.context_analysis) {
+            contextAnalysisContent.innerHTML = `
+                <div class="analysis-summary">
+                    <strong>Content Analysis:</strong> ${tweet.context_analysis.explanation || 'No analysis available'}
+                </div>
+                <div class="analysis-details">
+                    <span class="severity ${tweet.context_analysis.severity || 'low'}">${tweet.context_analysis.severity || 'Unknown'} severity</span>
+                    <span class="confidence ${tweet.context_analysis.confidence_level || 'low'}">${tweet.context_analysis.confidence_level || 'Unknown'} confidence</span>
+                </div>
+            `;
+            contextAnalysis.style.display = 'block';
+        } else {
+            // Hide context analysis if no data available
+            contextAnalysis.style.display = 'none';
+        }
+    }
+    
     // Embed functionality removed
     
     return template;

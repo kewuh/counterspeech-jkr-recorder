@@ -536,7 +536,7 @@ Provide your analysis in the following JSON format:
                         console.log(`   ❌ Error in AI analysis: ${analysisError.message}`);
                     }
                     
-                    // If it's a reply or quoted tweet, also store context
+                    // If it's a reply or quoted tweet, also store context and analyze it
                     if (isReply || isQuoted) {
                         const contextTweetId = isReply ? 
                             post.attributes?.post_data?.in_reply_to_status_id_str :
@@ -548,8 +548,36 @@ Provide your analysis in the following JSON format:
                         try {
                             const contextTweet = await this.twitter.getOriginalTweet(contextTweetId);
                             if (contextTweet && contextTweet.data) {
+                                // Store the context
                                 await this.storeReplyContext(post, contextTweet);
                                 console.log(`   ✅ ${contextType} context stored`);
+                                
+                                // Also run AI analysis on the quoted/replied-to content
+                                console.log(`   🤖 Running AI analysis on ${contextType}...`);
+                                try {
+                                    const contextAnalysis = await this.analyzer.analyzeTweet({
+                                        junkipedia_id: `quoted_${contextTweet.data.id}`,
+                                        content: contextTweet.data.text,
+                                        published_at: contextTweet.data.created_at,
+                                        raw_data: {
+                                            attributes: {
+                                                post_data: contextTweet.data,
+                                                search_data_fields: {
+                                                    is_quoted: true,
+                                                    quoted_by: post.id
+                                                }
+                                            }
+                                        }
+                                    });
+                                    
+                                    if (contextAnalysis) {
+                                        console.log(`   ✅ AI analysis completed for ${contextType}`);
+                                    } else {
+                                        console.log(`   ⚠️ AI analysis failed for ${contextType}`);
+                                    }
+                                } catch (analysisError) {
+                                    console.log(`   ⚠️ Error analyzing ${contextType}: ${analysisError.message}`);
+                                }
                             }
                         } catch (contextError) {
                             console.log(`   ⚠️ Could not store ${contextType} context: ${contextError.message}`);

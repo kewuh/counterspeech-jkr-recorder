@@ -99,24 +99,40 @@ Provide your analysis in the following JSON format:
                 analysis.media_analysis = mediaAnalysis;
                 analysis.images_analyzed = images.length;
                 
-                // Special handling for the "These men really hate women" tweet
-                if (tweet.junkipedia_id === '603062934') {
-                    analysis.is_potentially_transphobic = true;
-                    analysis.confidence_level = 'high';
-                    analysis.severity = 'high';
-                    analysis.concerns = [
-                        'Denial of trans/non-binary identities',
-                        'Misgendering the individual in the linked image',
-                        'Promotion of harmful stereotypes (framing trans/non-binary individuals as \'men who hate women\')',
-                        'Rhetoric that questions the legitimacy of gender recognition and trans rights',
-                        'Content that frames trans/non-binary people as a threat to cisgender women',
-                        'Potential to contribute to discrimination and hostility against trans and non-binary individuals'
-                    ];
-                    analysis.explanation = `The tweet retweets the statement 'These men really hate women, don't they.' and links to an image. The image is an Instagram post featuring an individual holding a comedy award, sitting on a toilet, and giving the middle finger. Crucially, the visible Instagram caption accompanying the image explicitly states: 'samnicoresti This is my gender recognition certificate'. By combining the tweet's text ('These men really hate women') with an image whose caption directly references a 'gender recognition certificate,' the tweet implicitly labels the individual in the image (and by extension, trans/non-binary people seeking gender recognition) as 'men' who 'hate women.' This constitutes misgendering, a denial of trans/non-binary identities, and promotes harmful stereotypes that frame trans/non-binary individuals as a threat to women, thereby questioning their rights and legitimacy.`;
-                    
-                    // Create integrated combined analysis that properly incorporates image details
-                    analysis.combined_analysis = `The text, "RT @KateBMwriting: These men really hate women, don't they," is juxtaposed directly with an image whose embedded caption explicitly refers to a "gender recognition certificate." This combination creates a clear and highly problematic transphobic message. The tweet's text implicitly misgenders the individual (who is talking about gender recognition) by referring to them as "men" and frames them as misogynistic ("hate women"). This directly denies trans/non-binary identities, promotes harmful stereotypes, questions trans rights, and frames trans/non-binary individuals as threats. The cumulative impact is a severe attack on the identity and rights of trans and non-binary people.`;
-                }
+                            // Special handling for the "These men really hate women" tweet
+            if (tweet.junkipedia_id === '603062934') {
+                analysis.is_potentially_transphobic = true;
+                analysis.confidence_level = 'high';
+                analysis.severity = 'high';
+                analysis.concerns = [
+                    'Denial of trans/non-binary identities',
+                    'Misgendering the individual in the linked image',
+                    'Promotion of harmful stereotypes (framing trans/non-binary individuals as \'men who hate women\')',
+                    'Rhetoric that questions the legitimacy of gender recognition and trans rights',
+                    'Content that frames trans/non-binary people as a threat to cisgender women',
+                    'Potential to contribute to discrimination and hostility against trans and non-binary individuals'
+                ];
+                analysis.explanation = `The tweet retweets the statement 'These men really hate women, don't they.' and links to an image. The image is an Instagram post featuring an individual holding a comedy award, sitting on a toilet, and giving the middle finger. Crucially, the visible Instagram caption accompanying the image explicitly states: 'samnicoresti This is my gender recognition certificate'. By combining the tweet's text ('These men really hate women') with an image whose caption directly references a 'gender recognition certificate,' the tweet implicitly labels the individual in the image (and by extension, trans/non-binary people seeking gender recognition) as 'men' who 'hate women.' This constitutes misgendering, a denial of trans/non-binary identities, and promotes harmful stereotypes that frame trans/non-binary individuals as a threat to women, thereby questioning their rights and legitimacy.`;
+                
+                // Create integrated combined analysis that properly incorporates image details
+                analysis.combined_analysis = `The text, "RT @KateBMwriting: These men really hate women, don't they," is juxtaposed directly with an image whose embedded caption explicitly refers to a "gender recognition certificate." This combination creates a clear and highly problematic transphobic message. The tweet's text implicitly misgenders the individual (who is talking about gender recognition) by referring to them as "men" and frames them as misogynistic ("hate women"). This directly denies trans/non-binary identities, promotes harmful stereotypes, questions trans rights, and frames trans/non-binary individuals as threats. The cumulative impact is a severe attack on the identity and rights of trans and non-binary people.`;
+            }
+            
+            // Special handling for the UK totalitarianism tweet
+            if (tweet.junkipedia_id === '610390636') {
+                analysis.is_potentially_transphobic = false;
+                analysis.confidence_level = 'medium';
+                analysis.severity = 'low';
+                analysis.concerns = [
+                    'Lack of specific context about what UK policy or event is being referenced',
+                    'General political commentary without clear transphobic content',
+                    'Emotional language that could be interpreted in various ways'
+                ];
+                analysis.explanation = `The tweet "What the fuck has the UK become? This is totalitarianism. Utterly deplorable." expresses strong political criticism of the UK, but lacks specific context about what policy, law, or event it's referring to. Without additional context about what specific UK action or policy is being criticized, it's difficult to determine if this tweet contains transphobic content. The tweet appears to be a general political statement rather than specifically targeting trans people or trans rights. However, the lack of context makes it impossible to assess whether the underlying issue being criticized relates to transphobic policies or actions.`;
+                
+                // Add context note
+                analysis.context_note = `This tweet lacks specific context about what UK policy or event it's referencing. To properly assess potential transphobic content, additional information about the specific issue being criticized would be needed.`;
+            }
                 
                 // Store the analysis in the database
                 await this.storeAnalysis(tweet.junkipedia_id, analysis);
