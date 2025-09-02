@@ -471,6 +471,7 @@ Provide your analysis in the following JSON format:
             for (const post of newTweets) {
                 try {
                     const isReply = post.attributes?.post_data?.in_reply_to_status_id_str;
+                    const isQuoted = post.attributes?.post_data?.quoted_status_id_str;
                     const tweetText = post.attributes?.search_data_fields?.sanitized_text || 
                                     post.attributes?.post_data?.full_text || 
                                     'No text available';
@@ -478,7 +479,7 @@ Provide your analysis in the following JSON format:
                     console.log(`\n📝 Processing new tweet:`);
                     console.log(`   💬 Text: ${tweetText.substring(0, 100)}...`);
                     console.log(`   📅 Published: ${post.attributes?.published_at}`);
-                    console.log(`   🔗 Type: ${isReply ? 'Reply' : 'Standalone tweet'}`);
+                    console.log(`   🔗 Type: ${isReply ? 'Reply' : isQuoted ? 'Quoted tweet' : 'Standalone tweet'}`);
                     
                     // Check if we already have this tweet
                     const existingTweet = await this.supabase.supabase
@@ -498,7 +499,7 @@ Provide your analysis in the following JSON format:
                         content: tweetText,
                         published_at: post.attributes?.published_at,
                         url: post.attributes?.url,
-                        post_type: isReply ? 'reply' : 'tweet',
+                        post_type: isReply ? 'reply' : isQuoted ? 'quoted' : 'tweet',
                         engagement_metrics: {
                             likes: post.attributes?.engagement_data?.like_count || 0,
                             retweets: post.attributes?.engagement_data?.retweet_count || 0,
@@ -535,19 +536,23 @@ Provide your analysis in the following JSON format:
                         console.log(`   ❌ Error in AI analysis: ${analysisError.message}`);
                     }
                     
-                    // If it's a reply, also store reply context
-                    if (isReply) {
-                        const originalTweetId = post.attributes?.post_data?.in_reply_to_status_id_str;
-                        console.log(`   🔍 Fetching original tweet context...`);
+                    // If it's a reply or quoted tweet, also store context
+                    if (isReply || isQuoted) {
+                        const contextTweetId = isReply ? 
+                            post.attributes?.post_data?.in_reply_to_status_id_str :
+                            post.attributes?.post_data?.quoted_status_id_str;
+                        
+                        const contextType = isReply ? 'original tweet' : 'quoted tweet';
+                        console.log(`   🔍 Fetching ${contextType} context...`);
                         
                         try {
-                            const originalTweet = await this.twitter.getOriginalTweet(originalTweetId);
-                            if (originalTweet && originalTweet.data) {
-                                await this.storeReplyContext(post, originalTweet);
-                                console.log(`   ✅ Reply context stored`);
+                            const contextTweet = await this.twitter.getOriginalTweet(contextTweetId);
+                            if (contextTweet && contextTweet.data) {
+                                await this.storeReplyContext(post, contextTweet);
+                                console.log(`   ✅ ${contextType} context stored`);
                             }
                         } catch (contextError) {
-                            console.log(`   ⚠️ Could not store reply context: ${contextError.message}`);
+                            console.log(`   ⚠️ Could not store ${contextType} context: ${contextError.message}`);
                         }
                     }
                     

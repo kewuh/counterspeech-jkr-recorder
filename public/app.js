@@ -555,12 +555,12 @@ function createTweetElement(tweet) {
         }
     }
     // Check for quotes
-    else if (searchData?.quoted_id) {
+    else if (tweet.raw_data?.attributes?.post_data?.quoted_status_id_str) {
         interactionType = 'quote';
-        targetTweetId = searchData.quoted_id;
+        targetTweetId = tweet.raw_data.attributes.post_data.quoted_status_id_str;
         
         replyToUser.textContent = `Quoting tweet`;
-        replyToUser.href = `https://twitter.com/i/status/${searchData.quoted_id}`;
+        replyToUser.href = `https://twitter.com/i/status/${targetTweetId}`;
         replyContext.style.display = 'block';
     }
     // Check for retweets
