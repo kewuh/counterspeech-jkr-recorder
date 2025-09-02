@@ -264,22 +264,44 @@ async function loadTweets() {
             console.warn('⚠️ Could not fetch article content:', articlesError.message);
         }
         
-        // Combine tweets with their analysis and article data
+        // Fetch reply context data separately
+        console.log('📡 Fetching reply context data from Supabase...');
+        const { data: replyContexts, error: contextsError } = await supabase
+            .from('reply_contexts')
+            .select('*');
+        
+        if (contextsError) {
+            console.warn('⚠️ Could not fetch reply context data:', contextsError.message);
+        }
+        
+        // Combine tweets with their analysis, article data, and reply context
         const tweetsWithAnalysis = tweets
             .filter(tweet => tweet.post_type !== 'sync_tracking') // Filter out sync tracking records
             .map(tweet => {
                 const analysis = analyses?.find(a => a.tweet_id === tweet.junkipedia_id);
                 const linkedArticles = articles?.filter(a => a.tweet_id === tweet.junkipedia_id);
+                const replyContext = replyContexts?.find(rc => rc.reply_tweet_id === tweet.junkipedia_id);
+                
+                // If this tweet has reply context, also get the analysis for the quoted/replied-to tweet
+                let contextAnalysis = null;
+                if (replyContext) {
+                    const contextTweetId = replyContext.original_tweet_id;
+                    contextAnalysis = analyses?.find(a => a.tweet_id === `quoted_${contextTweetId}`);
+                }
+                
                 return {
                     ...tweet,
                     tweet_analysis: analysis || null,
-                    linked_articles: linkedArticles || []
+                    linked_articles: linkedArticles || [],
+                    reply_context: replyContext || null,
+                    context_analysis: contextAnalysis || null
                 };
             });
         
         console.log('✅ Tweets loaded successfully:', tweetsWithAnalysis?.length || 0, 'tweets');
         console.log('📊 Analysis data found:', analyses?.length || 0, 'analyses');
         console.log('📄 Article content found:', articles?.length || 0, 'articles');
+        console.log('🔗 Reply context data found:', replyContexts?.length || 0, 'contexts');
         allTweets = tweetsWithAnalysis || [];
         filteredTweets = [...allTweets];
         
