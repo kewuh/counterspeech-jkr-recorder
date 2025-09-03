@@ -23,11 +23,10 @@
         <div class="container">
             <div class="hero-content">
                 <h1 class="hero-title">
-                    Turn <span class="highlight">Hate</span> Into <span class="highlight">Hope</span>
+                    Thanks, <span class="highlight">JK.</span>
                 </h1>
                 <p class="hero-subtitle">
-                    Pledge to donate when JK Rowling posts transphobic content. 
-                    Your money funds UK trans rights charities.
+                    When you post hate, we donate.
                 </p>
             </div>
         </div>
@@ -93,8 +92,8 @@
 
                 <!-- Pledge Form -->
                 <div class="form-container">
-                    <h2>Make her words pay.</h2>
-                    <p class="form-intro">When she tweets hate, trans rights groups get funded. Preauthorise us to charge your card up to your monthly cap.</p>
+                    <h2>Make her tweets pay.</h2>
+                    <p class="form-intro">Each anti-trans tweet from JK Rowling sparks a wave of micro-donations from supporters like you. Pledge as little as 10p per tweet to join our crowdfund for trans rights.</p>
                 
                 <form id="pledgeForm">
                     <div class="form-group">
@@ -107,23 +106,8 @@
                         <input type="email" id="email" required>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="monthlyLimit">Monthly Cap</label>
-                        <div class="selected-amount-display">
-                            <span class="selected-amount">£25</span>
-                            <button type="button" class="change-btn" id="changeMonthlyBtn">Change</button>
-                        </div>
-                        <div class="button-group hidden" id="monthlyLimitButtons">
-                            <button type="button" class="amount-btn" data-value="10">£10</button>
-                            <button type="button" class="amount-btn selected" data-value="25">£25</button>
-                            <button type="button" class="amount-btn" data-value="50">£50</button>
-                            <button type="button" class="amount-btn" data-value="100">£100</button>
-                        </div>
-                        <input type="hidden" id="monthlyLimit" value="25" required>
-                    </div>
-                    
                                             <div class="form-group">
-                            <label for="perPostAmount">Amount you pledge to donate per transphobic tweet</label>
+                            <label for="perPostAmount">Amount I pledge to donate per anti-trans tweet</label>
                         <div class="selected-amount-display">
                             <span class="selected-amount">25p</span>
                             <button type="button" class="change-btn" id="changePerPostBtn">Change</button>
@@ -135,6 +119,21 @@
                             <button type="button" class="amount-btn" data-value="1.00">£1</button>
                         </div>
                         <input type="hidden" id="perPostAmount" value="0.25" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="monthlyLimit">Max amount I pledge to donate each month</label>
+                        <div class="selected-amount-display">
+                            <span class="selected-amount">£10</span>
+                            <button type="button" class="change-btn" id="changeMonthlyBtn">Change</button>
+                        </div>
+                        <div class="button-group hidden" id="monthlyLimitButtons">
+                            <button type="button" class="amount-btn" data-value="5">£5</button>
+                            <button type="button" class="amount-btn selected" data-value="10">£10</button>
+                            <button type="button" class="amount-btn" data-value="25">£25</button>
+                            <button type="button" class="amount-btn" data-value="50">£50</button>
+                        </div>
+                        <input type="hidden" id="monthlyLimit" value="10" required>
                     </div>
                     
                     <div class="form-group">
@@ -237,7 +236,7 @@
                 </div>
                 <div class="faq-item">
                     <h3>How does the AI system work?</h3>
-                    <p>Our AI monitors JK Rowling's tweets in real time and flags potential transphobic content for human review. You can see the AI analysis system in action and review past assessments at <a href="/" class="faq-link">our analysis dashboard</a>.</p>
+                    <p>Our AI monitors JK Rowling's tweets in real time and flags potential transphobic content for human review. You can see the AI analysis system in action and review past assessments at <a href="/ai" class="faq-link">our analysis dashboard</a>.</p>
                 </div>
                 <div class="faq-item">
                     <h3>Can I cancel my pledge anytime?</h3>
@@ -269,7 +268,7 @@
                 </div>
                 <div class="footer-section">
                     <h4>Links</h4>
-                    <a href="/">Analysis System</a>
+                    <a href="/ai">Analysis System</a>
                     <a href="#faq">FAQ</a>
                     <a href="#privacy">Privacy Policy</a>
                 </div>

@@ -16,7 +16,7 @@ app.use((req, res, next) => {
 
 // Serve the pledge page at root (main domain)
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'pledge-v2.html'));
+    res.sendFile(path.join(__dirname, 'public', 'pledge.html'));
 });
 
 // Serve the AI analysis page at /ai route
