@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="pledger-avatar">${avatarInitial}</div>
                         <div class="pledger-info">
                             <div class="pledger-name">${firstName}</div>
-                            <div class="pledger-amount">£${pledger.monthlyLimit} cap • ${perPostText} per post</div>
+                            <div class="pledger-amount">£${pledger.monthlyLimit} cap • ${perPostText} per tweet</div>
                         </div>
                         <div class="pledger-time">${timeAgo}</div>
                     `;
