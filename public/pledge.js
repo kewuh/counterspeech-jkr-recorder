@@ -421,7 +421,7 @@ function hideThankYouModal() {
 // WhatsApp share function
 function shareViaWhatsApp() {
     const url = encodeURIComponent('https://www.thanksjk.org');
-    const text = encodeURIComponent('I just pledged to donate when JK Rowling tweets transphobic content. Join me in turning hate into hope: ');
+    const text = encodeURIComponent('I just pledged to donate when JK Rowling tweets transphobic content. Join me in turning hate into hope as a crowdfunder: ');
     const whatsappUrl = `https://wa.me/?text=${text}${url}`;
     window.open(whatsappUrl, '_blank');
 }
