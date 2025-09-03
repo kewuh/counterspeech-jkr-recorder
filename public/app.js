@@ -29,8 +29,10 @@ console.log('🔑 Supabase Key:', SUPABASE_ANON_KEY.substring(0, 20) + '...');
 let allTweets = [];
 let filteredTweets = [];
 let currentPage = 0;
-const tweetsPerPage = 100; // Show 100 tweets per page
+const tweetsPerPage = 20; // Show 20 tweets per page for infinite scroll
 let currentFilter = 'all';
+let isLoadingMore = false;
+let hasMoreTweets = true;
 
 // DOM elements
 const tweetsContainer = document.getElementById('tweetsContainer');
@@ -220,6 +222,17 @@ function setupEventListeners() {
     // Load more button
     loadMoreBtn.addEventListener('click', loadMoreTweets);
     console.log('✅ Load more button listener added');
+    
+    // Add scroll detection for infinite scroll
+    window.addEventListener('scroll', debounce(() => {
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+            if (hasMoreTweets && !isLoadingMore) {
+                console.log('📜 Near bottom, loading more tweets...');
+                loadMoreTweets();
+            }
+        }
+    }, 100));
+    console.log('✅ Scroll detection for infinite scroll added');
 }
 
 // Load tweets from Supabase
@@ -305,6 +318,10 @@ async function loadTweets() {
         allTweets = tweetsWithAnalysis || [];
         filteredTweets = [...allTweets];
         
+        // Reset pagination for infinite scroll
+        currentPage = 0;
+        hasMoreTweets = true;
+        
         updateStats().then(() => {
             displayTweets();
             showLoading(false);
@@ -317,27 +334,47 @@ async function loadTweets() {
     }
 }
 
-// Display tweets
+// Display tweets with infinite scroll
 function displayTweets() {
-    // Show all filtered tweets at once
-    const tweetsToShow = filteredTweets;
+    if (currentPage === 0) {
+        // First page - clear container
+        tweetsContainer.innerHTML = '';
+    }
     
-    // Clear container
-    tweetsContainer.innerHTML = '';
-    
-    if (tweetsToShow.length === 0) {
+    if (filteredTweets.length === 0) {
         showEmptyState();
         loadMoreBtn.style.display = 'none';
         return;
     }
     
+    // Calculate which tweets to show for current page
+    const startIndex = currentPage * tweetsPerPage;
+    const endIndex = startIndex + tweetsPerPage;
+    const tweetsToShow = filteredTweets.slice(startIndex, endIndex);
+    
+    if (tweetsToShow.length === 0) {
+        hasMoreTweets = false;
+        loadMoreBtn.style.display = 'none';
+        return;
+    }
+    
+    // Add new tweets to container
     tweetsToShow.forEach(tweet => {
         const tweetElement = createTweetElement(tweet);
         tweetsContainer.appendChild(tweetElement);
     });
     
-    // Hide load more button since we're showing all tweets
-    loadMoreBtn.style.display = 'none';
+    // Update pagination state
+    currentPage++;
+    hasMoreTweets = endIndex < filteredTweets.length;
+    
+    // Show/hide load more button
+    if (hasMoreTweets) {
+        loadMoreBtn.style.display = 'block';
+        loadMoreBtn.textContent = `Load More (${filteredTweets.length - endIndex} remaining)`;
+    } else {
+        loadMoreBtn.style.display = 'none';
+    }
     
     hideEmptyState();
     
@@ -345,6 +382,26 @@ function displayTweets() {
     if (window.twttr && window.twttr.widgets) {
         window.twttr.widgets.load();
     }
+}
+
+// Load more tweets for infinite scroll
+function loadMoreTweets() {
+    if (isLoadingMore || !hasMoreTweets) return;
+    
+    isLoadingMore = true;
+    loadMoreBtn.style.display = 'none';
+    document.getElementById('loading-more').style.display = 'block';
+    
+    // Simulate a small delay for better UX
+    setTimeout(() => {
+        displayTweets();
+        isLoadingMore = false;
+        
+        if (hasMoreTweets) {
+            document.getElementById('loading-more').style.display = 'none';
+            loadMoreBtn.style.display = 'block';
+        }
+    }, 300);
 }
 
 // Create tweet element from template
@@ -881,10 +938,7 @@ function applyFilters() {
     displayTweets();
 }
 
-// Load more tweets (now just refreshes the display)
-function loadMoreTweets() {
-    displayTweets();
-}
+
 
 // Update statistics
 async function updateStats() {

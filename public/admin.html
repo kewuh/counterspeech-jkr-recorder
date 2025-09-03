@@ -232,6 +232,17 @@
             transform: scale(1.1);
             box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
         }
+        
+        .load-more {
+            text-align: center;
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .load-more .loading {
+            color: #64748b;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -286,6 +297,10 @@
                     <tbody id="pledges-tbody">
                     </tbody>
                 </table>
+                <div id="pledges-load-more" class="load-more" style="display: none;">
+                    <div class="loading">Loading more pledges...</div>
+                    <button onclick="loadMorePledges()" class="btn btn-secondary" style="margin-top: 10px;">Load More Pledges</button>
+                </div>
             </div>
         </div>
         

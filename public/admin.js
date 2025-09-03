@@ -3,6 +3,10 @@
 // Global state
 let pledgesData = [];
 let statsData = {};
+let currentPledgesPage = 0;
+let pledgesPerPage = 20;
+let isLoadingMore = false;
+let hasMorePledges = true;
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
@@ -41,24 +45,7 @@ async function loadStats() {
     }
 }
 
-// Load active pledges
-async function loadPledges() {
-    try {
-        const response = await fetch('/api/admin/pledges');
-        const data = await response.json();
-        
-        if (data.success) {
-            pledgesData = data.pledges;
-            displayPledges(data.pledges);
-        } else {
-            throw new Error(data.error || 'Failed to load pledges');
-        }
-        
-    } catch (error) {
-        console.error('Error loading pledges:', error);
-        showError('Failed to load pledges: ' + error.message);
-    }
-}
+
 
 // Display pledges in table
 function displayPledges(pledges) {
@@ -240,3 +227,94 @@ function showSuccess(message) {
 setInterval(() => {
     loadStats(); // Only refresh stats to avoid disrupting user
 }, 30000);
+
+// Infinite scroll functionality
+let allPledgesData = []; // Store all pledges data for infinite scroll
+
+// Modify loadPledges to store all data
+async function loadPledges() {
+    try {
+        currentPledgesPage = 0;
+        pledgesData = [];
+        hasMorePledges = true;
+        
+        const response = await fetch('/api/admin/pledges');
+        const data = await response.json();
+        
+        if (data.success) {
+            allPledgesData = data.pledges; // Store all data
+            // Load first page
+            await loadMorePledges();
+        } else {
+            throw new Error(data.error || 'Failed to load pledges');
+        }
+        
+    } catch (error) {
+        console.error('Error loading pledges:', error);
+        showError('Failed to load pledges: ' + error.message);
+    }
+}
+
+// Load more pledges (infinite scroll)
+async function loadMorePledges() {
+    if (isLoadingMore || !hasMorePledges) return;
+    
+    isLoadingMore = true;
+    document.getElementById('pledges-load-more').style.display = 'block';
+    
+    // Simulate loading delay for better UX
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    const startIndex = currentPledgesPage * pledgesPerPage;
+    const endIndex = startIndex + pledgesPerPage;
+    const pageData = allPledgesData.slice(startIndex, endIndex);
+    
+    if (pageData.length === 0) {
+        hasMorePledges = false;
+        document.getElementById('pledges-load-more').style.display = 'none';
+        isLoadingMore = false;
+        return;
+    }
+    
+    // Add new data to existing data
+    pledgesData = [...pledgesData, ...pageData];
+    displayPledges(pledgesData);
+    
+    currentPledgesPage++;
+    hasMorePledges = endIndex < allPledgesData.length;
+    
+    if (!hasMorePledges) {
+        document.getElementById('pledges-load-more').style.display = 'none';
+    }
+    
+    isLoadingMore = false;
+}
+
+// Add scroll detection for infinite scroll
+document.addEventListener('DOMContentLoaded', function() {
+    // Add scroll listener to the pledges section
+    const pledgesSection = document.querySelector('.section');
+    if (pledgesSection) {
+        pledgesSection.addEventListener('scroll', function() {
+            // Check if user is near bottom
+            const scrollTop = pledgesSection.scrollTop;
+            const scrollHeight = pledgesSection.scrollHeight;
+            const clientHeight = pledgesSection.clientHeight;
+            
+            if (scrollTop + clientHeight >= scrollHeight - 100) { // 100px from bottom
+                if (hasMorePledges && !isLoadingMore) {
+                    loadMorePledges();
+                }
+            }
+        });
+    }
+    
+    // Alternative: Listen to window scroll for better compatibility
+    window.addEventListener('scroll', function() {
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
+            if (hasMorePledges && !isLoadingMore) {
+                loadMorePledges();
+            }
+        }
+    });
+});
