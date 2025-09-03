@@ -45,6 +45,23 @@
                 document.getElementById('card-element').innerHTML = '<div style="color: red; padding: 10px; border: 1px solid red; border-radius: 4px;">Payment form failed to load. Please refresh the page.</div>';
             }
         });
+
+        // Smooth scrolling for FAQ link
+        document.addEventListener('DOMContentLoaded', function() {
+            const faqLink = document.querySelector('a[href="#faq"]');
+            if (faqLink) {
+                faqLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const faqSection = document.getElementById('faq');
+                    if (faqSection) {
+                        faqSection.scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            }
+        });
     </script>
 </head>
 <body>
@@ -256,7 +273,7 @@
     </section>
 
     <!-- FAQ Section -->
-    <section class="faq">
+    <section class="faq" id="faq">
         <div class="container">
             <h2>Frequently Asked Questions</h2>
             <div class="faq-list">
@@ -270,7 +287,7 @@
                 </div>
                 <div class="faq-item">
                     <h3>Can I cancel my pledge anytime?</h3>
-                    <p>Yes! You can cancel your pledge at any time by emailing us. No questions asked.</p>
+                    <p>Yes! You can cancel your pledge at any time by <a href="mailto:david@thanksjk.org" class="faq-link">emailing us</a>. No questions asked.</p>
                 </div>
                 <div class="faq-item">
                     <h3>What if I reach my monthly limit?</h3>
@@ -310,7 +327,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 ThanksJK 🏳️‍⚧️ Made in solidarity with the trans community.</p>
+                <p>&copy; 2025 Thanks, JK. 🏳️‍⚧️ Made in solidarity with the trans community.</p>
             </div>
         </div>
     </footer>
