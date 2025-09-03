@@ -7,9 +7,6 @@ const PORT = process.env.PORT || 3000;
 // Add JSON body parsing
 app.use(express.json());
 
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
-
 // Enable CORS for development
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -46,6 +43,9 @@ app.get('/pledge-v2', (req, res) => {
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
+
+// Serve static files from public directory (after custom routes)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve Stripe config with actual key
 app.get('/stripe-config.js', (req, res) => {
