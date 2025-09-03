@@ -17,13 +17,23 @@ app.use((req, res, next) => {
     next();
 });
 
-// Serve the main page
+// Serve the pledge page at root (main domain)
 app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pledge-v2.html'));
+});
+
+// Serve the AI analysis page at /ai route
+app.get('/ai', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Serve the pledge page
+// Keep the original pledge route for backward compatibility
 app.get('/pledge', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pledge.html'));
+});
+
+// Handle www subdomain routing (for when deployed)
+app.get('/www', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'pledge.html'));
 });
 
