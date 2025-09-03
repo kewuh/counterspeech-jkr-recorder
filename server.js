@@ -1,8 +1,14 @@
 const express = require('express');
 const path = require('path');
 const config = require('./config');
+
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+
+
+
 
 // Add JSON body parsing
 app.use(express.json());
@@ -39,9 +45,12 @@ app.get('/pledge-v2', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'pledge-v2.html'));
 });
 
-// Serve the admin dashboard
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+// Admin dashboard disabled for security
+app.get('/admin*', (req, res) => {
+    res.status(404).json({ 
+        error: 'Admin dashboard not available',
+        message: 'This endpoint has been disabled for security reasons'
+    });
 });
 
 // Serve static files from public directory (after custom routes)
@@ -114,96 +123,7 @@ app.post('/api/process-charge', async (req, res) => {
     }
 });
 
-// Admin API endpoints
-app.get('/api/admin/pledges', async (req, res) => {
-    try {
-        if (!stripeAPI || !stripeAPI.supabase) {
-            return res.status(500).json({ success: false, error: 'Database not connected' });
-        }
-        
-        const { data: pledges, error } = await stripeAPI.supabase
-            .from('pledges')
-            .select('*')
-            .eq('status', 'active')
-            .order('created_at', { ascending: false });
-            
-        if (error) {
-            throw new Error(error.message);
-        }
-        
-        res.json({ success: true, pledges: pledges || [] });
-    } catch (error) {
-        console.error('Error fetching pledges:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
 
-app.get('/api/admin/recent-posts', async (req, res) => {
-    try {
-        if (!stripeAPI || !stripeAPI.supabase) {
-            return res.status(500).json({ success: false, error: 'Database not connected' });
-        }
-        
-        const { data: posts, error } = await stripeAPI.supabase
-            .from('transphobic_posts')
-            .select('*, pledges(email)')
-            .order('created_at', { ascending: false })
-            .limit(20);
-            
-        if (error) {
-            throw new Error(error.message);
-        }
-        
-        res.json({ success: true, posts: posts || [] });
-    } catch (error) {
-        console.error('Error fetching recent posts:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-app.post('/api/admin/run-monthly-billing', async (req, res) => {
-    if (!stripeAPI) {
-        return res.status(503).json({ 
-            success: false, 
-            error: 'Payment system not available. Please add Stripe keys to .env file.' 
-        });
-    }
-    try {
-        const result = await stripeAPI.processMonthlyCharges();
-        res.json(result);
-    } catch (error) {
-        console.error('Error running monthly billing:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-app.post('/api/admin/test-tracking', async (req, res) => {
-    try {
-        if (!stripeAPI || !stripeAPI.supabase) {
-            return res.status(500).json({ success: false, error: 'Database not connected' });
-        }
-        
-        // Get first active pledge
-        const { data: pledges, error: pledgeError } = await stripeAPI.supabase
-            .from('pledges')
-            .select('*')
-            .eq('status', 'active')
-            .limit(1);
-            
-        if (pledgeError || !pledges || pledges.length === 0) {
-            return res.status(404).json({ success: false, error: 'No active pledges found' });
-        }
-        
-        const pledge = pledges[0];
-        const tweetId = `test_tweet_${Date.now()}`;
-        
-        const result = await stripeAPI.trackTransphobicPost(pledge.id, tweetId);
-        res.json(result);
-    } catch (error) {
-        console.error('Error testing tracking:', error);
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
 
 // Get recent public pledgers
 app.get('/api/recent-public-pledgers', async (req, res) => {

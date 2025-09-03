@@ -73,7 +73,7 @@ Before deploying, make sure your Supabase database has the required tables:
 ✅ **Monitoring Dashboard** - View JK Rowling's tweets with AI analysis
 ✅ **Pledge System** - Accept donations with Stripe integration
 ✅ **AI Analysis** - Transphobic content detection with Gemini
-✅ **Admin Dashboard** - Manage pledges and view statistics
+❌ **Admin Dashboard** - Disabled for security (no admin access)
 ✅ **WhatsApp Sharing** - Social sharing functionality
 
 ## Custom Domain (Optional)

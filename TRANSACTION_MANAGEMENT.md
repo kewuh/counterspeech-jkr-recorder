@@ -57,7 +57,7 @@ node test-payment-methods.js
 
 ### **Daily Tasks:**
 - **Monitor transphobic posts** - Check if new posts are being tracked
-- **Review admin dashboard** - Check for any errors or issues
+- **Review system logs** - Check for any errors or issues
 - **Verify system health** - Ensure all components are working
 
 ### **Weekly Tasks:**
@@ -123,7 +123,7 @@ jobs:
 - **Payment method validity** - Percentage of valid payment methods
 
 ### **Monitoring Tools:**
-1. **Admin Dashboard** - `http://localhost:3000/admin`
+1. **System Status** - Check server logs and health
 2. **Stripe Dashboard** - `https://stripe.com/dashboard`
 3. **Supabase Dashboard** - Your Supabase project dashboard
 4. **Command line tools** - Various test scripts
@@ -182,7 +182,7 @@ node export-pledge-data.js
 
 ### **4. Security**
 - **Secure API keys** - Never expose Stripe keys
-- **Access control** - Limit admin dashboard access
+- **Access control** - Admin dashboard disabled for security
 - **Data encryption** - Ensure sensitive data is encrypted
 
 ## 🚨 Emergency Procedures
@@ -212,6 +212,6 @@ node export-pledge-data.js
 - **Status page** - https://status.supabase.com
 
 ### **Your System:**
-- **Admin Dashboard** - `http://localhost:3000/admin`
+- **System Monitoring** - Server logs and health checks
 - **Test Scripts** - Various `.js` files in the project
 - **Logs** - Check server logs for errors
